@@ -9,6 +9,7 @@ import init.upinmcSE.model.Book;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Objects;
 
 public class BookService {
@@ -71,10 +72,10 @@ public class BookService {
             conn.commit();
             result = "Đã thêm thành công book với id: " + bookId;
         }catch (SQLException e) {
-            rollbackSafely(conn);
+            JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
         } finally {
-            closeConnectionSafely(conn);
+            JDBCUtil.getInstance().closeConnection(conn);
         }
         return result;
     }
@@ -94,24 +95,43 @@ public class BookService {
         }
     }
 
-    private void rollbackSafely(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.rollback();
-            } catch (SQLException rollbackEx) {
-                JDBCUtil.getInstance().printSQLException(rollbackEx);
+    public void getAllBooks(){
+        BookDAO bookDAO = BookDAO.getInstance();
+        List<Book> books = null;
+        try(Connection conn = JDBCUtil.getInstance().getConnection()){
+            books = bookDAO.getAll(conn);
+
+            if(Objects.isNull(books)){
+                System.out.println("Không tồn tại books nào");
+            }else{
+                for (Book book : books) {
+                    System.out.println(book);
+                };
             }
+        }catch (SQLException e) {
+            JDBCUtil.getInstance().printSQLException(e);
         }
     }
 
-    private void closeConnectionSafely(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.setAutoCommit(true);
-                conn.close();
-            } catch (SQLException e) {
-                JDBCUtil.getInstance().printSQLException(e);
+    public void deleteBook(String name){
+        BookDAO bookDAO = BookDAO.getInstance();
+
+        try(Connection conn = JDBCUtil.getInstance().getConnection()){
+
+            Book book = bookDAO.getByName(name, conn);
+            if(Objects.isNull(book)){
+                System.out.println("Book với tên " + name + " không tồn tại");
+                return;
             }
+
+            int result = bookDAO.deleteOne(name, conn);
+            if(result <= 0){
+                System.out.println("Xóa book với name " + name + " không thành công");
+            }else{
+                System.out.println("Xóa book với name " + name + " thành công");
+            }
+        }catch (SQLException e) {
+            JDBCUtil.getInstance().printSQLException(e);
         }
     }
 }

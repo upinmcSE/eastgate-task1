@@ -4,9 +4,12 @@ import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AuthorDAO implements DAOInterface<Author> {
+
+    public static AuthorDAO getInstance() {return new AuthorDAO();}
 
     @Override
     public Author getByName(String name, Connection conn) throws SQLException {
@@ -27,8 +30,6 @@ public class AuthorDAO implements DAOInterface<Author> {
         }
         return author;
     }
-
-    public static AuthorDAO getInstance() {return new AuthorDAO();}
 
     @Override
     public int insertOne(Author object, Connection conn) throws SQLException {
@@ -52,31 +53,43 @@ public class AuthorDAO implements DAOInterface<Author> {
     }
 
     @Override
-    public int insertMany(List<Author> objects, Connection conn) throws SQLException {
-        int result = 0;
-        return result;
-    }
-
-    @Override
     public int updateOne(Author object, Connection conn) throws SQLException {
         int result = 0;
         return result;
     }
 
     @Override
-    public int deleteOne(int id, Connection conn) throws SQLException {
+    public int deleteOne(String name, Connection conn) throws SQLException {
+        String sql = "DELETE FROM authors WHERE name = ?";
         int result = 0;
+
+        try(PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, name);
+            result = ps.executeUpdate();
+        }
+
         return result;
     }
 
     @Override
-    public Author getOne(int id, Connection conn) throws SQLException {
-        return null;
-    }
-
-    @Override
     public List<Author> getAll(Connection conn) throws SQLException {
-        return List.of();
+        List<Author> authors = new ArrayList<Author>();
+        String sql = "SELECT * FROM authors";
+
+        try(PreparedStatement ps = conn.prepareStatement(sql)){
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                Author author = new Author();
+                author.setId(rs.getInt("author_id"));
+                author.setName(rs.getString("name"));
+                author.setAge(rs.getInt("age"));
+                authors.add(author);
+            }
+        }catch (SQLException e){
+            JDBCUtil.getInstance().printSQLException(e);
+        }
+
+        return authors;
     }
 
     @Override

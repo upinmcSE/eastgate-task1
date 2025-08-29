@@ -7,6 +7,11 @@ public class Patron {
 
     public Patron() {}
 
+    public Patron(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
     public Patron(int id, String name, int age) {
         this.id = id;
         this.name = name;

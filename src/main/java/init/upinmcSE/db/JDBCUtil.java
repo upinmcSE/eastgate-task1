@@ -36,4 +36,25 @@ public class JDBCUtil {
             }
         }
     }
+
+    public void rollback(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException rollbackEx) {
+                JDBCUtil.getInstance().printSQLException(rollbackEx);
+            }
+        }
+    }
+
+    public void closeConnection(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (SQLException e) {
+                JDBCUtil.getInstance().printSQLException(e);
+            }
+        }
+    }
 }

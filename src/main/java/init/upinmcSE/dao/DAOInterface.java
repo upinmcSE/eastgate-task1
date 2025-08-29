@@ -1,14 +1,15 @@
 package init.upinmcSE.dao;
 
+import java.sql.Connection;
 import java.util.List;
 
 public interface DAOInterface<T> {
-    public int insertOne(T object);
-    public int insertMany(List<T> objects);
-    public int updateOne(T object);
-    public int deleteOne(int id);
-    public T getOne(int id);
-    public T getByID(int id);
-    public List<T> getAll();
-    public List<T> getByCondition();
+    public int insertOne(T object, Connection conn) throws Exception;
+    public int insertMany(List<T> objects, Connection conn) throws Exception;
+    public int updateOne(T object, Connection conn) throws Exception;
+    public int deleteOne(int id, Connection conn) throws Exception;
+    public T getOne(int id, Connection conn) throws Exception;
+    public T getByName(String name, Connection conn) throws Exception;
+    public List<T> getAll(Connection conn) throws Exception;
+    public List<T> getByCondition(Connection conn) throws Exception;
 }

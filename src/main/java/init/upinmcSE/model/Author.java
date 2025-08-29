@@ -10,6 +10,11 @@ public class Author {
 
     public Author(){}
 
+    public Author(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
     public Author(int id, String name, int age) {
         this.id = id;
         this.name = name;

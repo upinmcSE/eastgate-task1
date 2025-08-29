@@ -3,34 +3,25 @@ package init.upinmcSE.dao;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 
 public class AuthorDAO implements DAOInterface<Author> {
 
     @Override
-    public Author getByID(int id) {
+    public Author getByName(String name, Connection conn) throws SQLException {
         Author author = null;
-        String sql = "SELECT * FROM authors WHERE id = ?";
-        try(Connection conn = JDBCUtil.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)
-        ){
-            ps.setInt(1, id);
+        String sql = "SELECT * FROM authors WHERE name = ?";
+        try(PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, name);
             ResultSet rs = ps.executeQuery();
 
-            if(!rs.next()){
-                return null;
-            }
-
             while (rs.next()) {
-                author.setId(rs.getInt("id"));
+                author = new Author();
+                author.setId(rs.getInt("author_id"));
                 author.setName(rs.getString("name"));
                 author.setAge(rs.getInt("age"));
             }
-
         }catch (SQLException e){
             JDBCUtil.getInstance().printSQLException(e);
         }
@@ -40,17 +31,20 @@ public class AuthorDAO implements DAOInterface<Author> {
     public static AuthorDAO getInstance() {return new AuthorDAO();}
 
     @Override
-    public int insertOne(Author object) {
+    public int insertOne(Author object, Connection conn) throws SQLException {
         int result = 0;
-        String sql = "INSERT INTO authors (id, name, age) VALUES(?,?,?)";
-        try(Connection conn = JDBCUtil.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)
-        ){
-            ps.setInt(1, object.getId());
-            ps.setString(2, object.getName());
-            ps.setInt(3, object.getAge());
+        String sql = "INSERT INTO authors (name, age) VALUES(?,?)";
+        try(PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+            ps.setString(1, object.getName());
+            ps.setInt(2, object.getAge());
 
             result = ps.executeUpdate();
+            if(result > 0){
+                ResultSet rs = ps.getGeneratedKeys();
+                if(rs.next()){
+                    result = rs.getInt(1);
+                }
+            }
         }catch (SQLException e){
             JDBCUtil.getInstance().printSQLException(e);
         }
@@ -58,57 +52,35 @@ public class AuthorDAO implements DAOInterface<Author> {
     }
 
     @Override
-    public int insertMany(List<Author> objects) {
+    public int insertMany(List<Author> objects, Connection conn) throws SQLException {
         int result = 0;
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-
-
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
-        }
-
         return result;
     }
 
     @Override
-    public int updateOne(Author object) {
+    public int updateOne(Author object, Connection conn) throws SQLException {
         int result = 0;
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
-        }
-
         return result;
     }
 
     @Override
-    public int deleteOne(int id) {
+    public int deleteOne(int id, Connection conn) throws SQLException {
         int result = 0;
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
-        }
-
         return result;
     }
 
     @Override
-    public Author getOne(int id) {
+    public Author getOne(int id, Connection conn) throws SQLException {
         return null;
     }
 
     @Override
-    public List<Author> getAll() {
+    public List<Author> getAll(Connection conn) throws SQLException {
         return List.of();
     }
 
     @Override
-    public List<Author> getByCondition() {
+    public List<Author> getByCondition(Connection conn) throws SQLException {
         return List.of();
     }
 }

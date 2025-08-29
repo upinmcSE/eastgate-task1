@@ -11,19 +11,22 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        /* thêm author */
-        //Author author1 = new Author(1, "A", 1990);
-        //System.out.println("Đã thêm mới " + AuthorService.getInstance().insert(author1) + " bản ghi");
+        /* 1. thêm author */
+        Author author1 = new Author("C", 1993);
+        //System.out.println(AuthorService.getInstance().insert(author1));
 
-        /* thêm book */
 
-        /* happy case*/
-        Author author2 = new Author(2, "B", 1990);
-        Author author3 = new Author(3, "C", 1990);
-        Book book1 = new Book(1, "Learn JAVA", 2000, List.of(author2, author3));
-        System.out.println("Đã thêm mới " + BookService.getInstance().insertBook(book1));
+        /* 2. thêm book */
+        Author author2 = new Author("B", 1990);
+        Book book1 = new Book("Learn C#", 1995, List.of(author1, author2));
+        //System.out.println(BookService.getInstance().insertBook(book1));
 
-        /* edge case */
+        /* 3. getAuthor by name */
+        //AuthorService.getInstance().getBookByName("D");
+
+        /* 4. getBook by name */
+        BookService.getInstance().getBookByName("Learn JAVA");
+
 
     }
 }

@@ -10,6 +10,12 @@ public class Book {
 
     public Book(){}
 
+    public Book(String name, int nxb, List<Author> authors) {
+        this.name = name;
+        this.nxb = nxb;
+        this.authors = authors;
+    }
+
     public Book(int id, String name, int nxb, List<Author> authors) {
         this.id = id;
         this.name = name;

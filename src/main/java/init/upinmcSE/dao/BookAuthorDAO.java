@@ -10,12 +10,10 @@ public class BookAuthorDAO {
 
     public static BookAuthorDAO getInstance() { return new BookAuthorDAO(); }
 
-    public int insertRelation(int bookID, int authorID) {
+    public int insertRelation(int bookID, int authorID, Connection conn) {
         int result = 0;
         String sql = "INSERT INTO book_author (book_id, author_id) VALUES (?, ?)";
-        try(Connection conn = JDBCUtil.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)
-        ){
+        try(PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1, bookID);
             ps.setInt(2, authorID);
             result = ps.executeUpdate();

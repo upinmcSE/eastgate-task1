@@ -24,7 +24,7 @@ public class JDBCUtil {
     public void printSQLException(SQLException ex) {
         for(Throwable e : ex){
             if(e instanceof SQLException){
-//                e.printStackTrace(System.err);
+                e.printStackTrace(System.err);
                 System.err.println("SQLState: " + ((SQLException)e).getSQLState());
                 System.err.println("Error Code: " + ((SQLException)e).getErrorCode());
                 System.err.println("Message: " + e.getMessage());

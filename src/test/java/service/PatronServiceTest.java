@@ -13,6 +13,7 @@ import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -100,6 +101,51 @@ class PatronServiceTest {
         Optional<Patron> result = patronService.getPatronByName("A");
         assertTrue(result.isEmpty());
         verify(patronDAO, times(1)).getByName(eq("A"), any(Connection.class));
+    }
+
+    @Test
+    void testBorrowBook_Success() throws SQLException {
+        Patron patron = new Patron(1, "PatronA", 25);
+        Book book = new Book(10, "BookA", 2003, 8, 2, List.of());
+
+        try (MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
+            mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
+
+            Connection connMock = mock(Connection.class);
+            PreparedStatement psMock = mock(PreparedStatement.class);
+
+            when(jdbcUtil.getConnection()).thenReturn(connMock);
+            when(connMock.prepareStatement(anyString())).thenReturn(psMock);
+
+            when(bookDAO.getByName(eq("BookA"), eq(connMock)))
+                    .thenReturn(Optional.of(book));
+
+            when(patronDAO.getByName(eq("PatronA"), eq(connMock)))
+                    .thenReturn(Optional.of(patron));
+
+            when(patronDAO.checkBorrowBook(eq(patron), eq(book), eq(connMock)))
+                    .thenReturn(true);
+
+            when(bookDAO.checkAvailability(eq(book.getId()), eq(connMock)))
+                    .thenReturn(true);
+
+            when(psMock.executeUpdate()).thenReturn(1);
+
+            String result = patronService.borrowBook(patron, book);
+
+            assertEquals("Borrowed book successfully", result);
+
+            verify(bookDAO, times(1)).getByName(eq("BookA"), eq(connMock));
+            verify(patronDAO, times(1)).getByName(eq("PatronA"), eq(connMock));
+            verify(patronDAO, times(1)).checkBorrowBook(eq(patron), eq(book), eq(connMock));
+            verify(bookDAO, times(1)).checkAvailability(eq(book.getId()), eq(connMock));
+            verify(psMock, times(1)).executeUpdate();
+            verify(bookDAO, times(1)).updateOne(eq(book), eq(connMock));
+            verify(connMock, times(1)).commit();
+
+            assertEquals(7, book.getAvailableCount());
+            assertEquals(3, book.getBorrowedCount());
+        }
     }
 
     @Test
@@ -199,6 +245,46 @@ class PatronServiceTest {
             verify(bookDAO, never()).checkAvailability(eq(1), any());
         }
     }
+
+    @Test
+    void testReturnBook_Success() throws SQLException {
+        // Arrange
+        Patron patron = new Patron(1, "PatronA", 25);
+        Book book = new Book(10, "BookA", 2003, 8, 2, List.of());
+
+        try (MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
+            mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
+
+            Connection connMock = mock(Connection.class);
+            PreparedStatement psMock = mock(PreparedStatement.class);
+
+            when(jdbcUtil.getConnection()).thenReturn(connMock);
+            when(connMock.prepareStatement(anyString())).thenReturn(psMock);
+
+            when(bookDAO.getByName(eq("BookA"), eq(connMock)))
+                    .thenReturn(Optional.of(book));
+
+            when(patronDAO.getByName(eq("PatronA"), eq(connMock)))
+                    .thenReturn(Optional.of(patron));
+
+            when(psMock.executeUpdate()).thenReturn(1);
+
+            String result = patronService.returnBook(patron, book);
+
+            assertEquals("Return successfully", result);
+
+            verify(bookDAO, times(1)).getByName(eq("BookA"), eq(connMock));
+            verify(patronDAO, times(1)).getByName(eq("PatronA"), eq(connMock));
+            verify(psMock, times(1)).executeUpdate();
+            verify(bookDAO, times(1)).updateOne(eq(book), eq(connMock));
+            verify(connMock, times(1)).commit();
+
+
+            assertEquals(9, book.getAvailableCount());
+            assertEquals(1, book.getBorrowedCount());
+        }
+    }
+
 
     @Test
     void testReturnBook_NotBorrowed() throws SQLException {

@@ -90,6 +90,10 @@ public class PatronService {
     }
 
     public String borrowBook(Patron patron, Book book) {
+        if(Objects.isNull(patron) || Objects.isNull(book)) {
+            LOGGER.warning("Inputs is null");
+            return "Inputs is null";
+        }
         Connection conn = null;
         String sql = "INSERT INTO patron_book (patron_id, book_id, status) VALUES (?, ?, ?)";
         try{
@@ -186,7 +190,7 @@ public class PatronService {
                 return "Cannot find debit note for return";
             }
 
-            // update book counts
+            // update book
             book.setAvailableCount(book.getAvailableCount() + 1);
             book.setBorrowedCount(book.getBorrowedCount() - 1);
             bookDAO.updateOne(book, conn);

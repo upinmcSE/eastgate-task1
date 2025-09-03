@@ -7,93 +7,68 @@ import init.upinmcSE.model.Author;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Logger;
 
 public class AuthorService {
-    private AuthorDAO authorDAO;
+    private static final Logger LOGGER = Logger.getLogger(AuthorService.class.getName());
+    private static final AuthorService INSTANCE = new AuthorService();
+    private final AuthorDAO authorDAO = AuthorDAO.getInstance();
     private final String NOTI = "Thêm mới tác giả thất bại";
 
     public static AuthorService getInstance() { return new AuthorService(); }
 
     public String insert(Author author) {
         String result = NOTI;
-        authorDAO = AuthorDAO.getInstance();
-        Connection conn = null;
-        try{
-            conn = JDBCUtil.getInstance().getConnection();
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
             conn.setAutoCommit(false);
 
-            Author a = authorDAO.getByName(author.getName(), conn);
+            Optional<Author> existingAuthor = authorDAO.getByName(author.getName(), conn);
 
-            if(!Objects.isNull(a)){
+            if (existingAuthor.isPresent()) {
                 conn.rollback();
-                result = "Author đã tồn tại";
-                return result;
+                return "Author đã tồn tại";
             }
 
             int authorId = authorDAO.insertOne(author, conn);
             conn.commit();
-            return "Thêm mới thành công author id " + authorId;
-        }catch (SQLException e) {
-            JDBCUtil.getInstance().rollback(conn);
+            result = "Thêm mới thành công author id " + authorId;
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
-        } finally {
-            JDBCUtil.getInstance().closeConnection(conn);
         }
         return result;
     }
 
-    public void getBookByName(String name){
-        authorDAO = AuthorDAO.getInstance();
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-            Author author = authorDAO.getByName(name, conn);
-            if(Objects.isNull(author)){
-                System.out.println("Không tồn tại author với tên " + name);
-            }else{
-                System.out.println(author);
-            }
-        }catch (SQLException e) {
+    public Optional<Author> getAuthorByName(String name) {
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+            return authorDAO.getByName(name, conn);
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
+            return Optional.empty();
         }
     }
 
-    public void getAllAuthors(){
-        authorDAO = AuthorDAO.getInstance();
-        List<Author> authors = null;
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-            authors = authorDAO.getAll(conn);
-
-            if(Objects.isNull(authors)){
-                System.out.println("Không có authors nào");
-            }else{
-                for(Author author : authors){
-                    System.out.println(author);
-                }
-            }
-        }catch (SQLException e) {
+    public List<Author> getAllAuthors() {
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+            return authorDAO.getAll(conn);
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
+            return List.of();
         }
     }
 
-    public void deleteAuthor(String name){
-        authorDAO = AuthorDAO.getInstance();
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-            Author author = authorDAO.getByName(name, conn);
-            if(Objects.isNull(author)){
-                System.out.println("Không tồn tại author với tên " + name);
+    public boolean deleteAuthor(String name) {
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+            Optional<Author> author = authorDAO.getByName(name, conn);
+            if (author.isEmpty()) {
+                LOGGER.warning("Không tồn tại author với tên " + name);
+                return false;
             }
-
             int result = authorDAO.deleteOne(name, conn);
-            if(result <= 0){
-                System.out.println("Xóa author " + name + " không thành công");
-            }else{
-                System.out.println("Xóa author " + name + " thành công");
-            }
-
-        }catch (SQLException e) {
+            return result > 0;
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
+            return false;
         }
     }
 }

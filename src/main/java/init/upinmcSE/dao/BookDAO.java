@@ -6,87 +6,87 @@ import init.upinmcSE.model.Book;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class BookDAO implements DAOInterface<Book> {
+    private static final BookDAO INSTANCE = new BookDAO();
 
-    public static BookDAO getInstance() { return new BookDAO(); }
+    private BookDAO() {}
 
-    @Override
-    public int insertOne(Book object, Connection conn) throws SQLException {
-        int result = 0;
-        String sql = "INSERT INTO books (name, nxb) VALUES(?, ?)";
-        try(PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-            ps.setString(1, object.getName());
-            ps.setInt(2, object.getNxb());
-
-            int rowsAffected = ps.executeUpdate();
-            if(rowsAffected > 0) {
-                try(ResultSet rs = ps.getGeneratedKeys()) {
-                    if(rs.next()) {
-                        result = rs.getInt(1);
-                    }
-                }
-            }
-        }catch (SQLException e) {
-            JDBCUtil.getInstance().printSQLException(e);
-        }
-        return result;
+    public static BookDAO getInstance() {
+        return INSTANCE;
     }
 
     @Override
-    public Book getByName(String name, Connection conn) throws SQLException {
-        Book book = null;
-        String sql = "SELECT * FROM books WHERE name = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setString(1, name);
+    public int insertOne(Book object, Connection conn) throws SQLException {
+        String sql = "INSERT INTO books (name, nxb) VALUES (?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, object.getName());
+            ps.setInt(2, object.getNxb());
 
-            ResultSet rs = ps.executeQuery();
-            if(rs.next()) {
-                book = new Book();
-                book.setId(rs.getInt("book_id"));
-                book.setName(rs.getString("name"));
-                book.setNxb(rs.getInt("nxb"));
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
             }
-        }catch (SQLException e) {
-            JDBCUtil.getInstance().printSQLException(e);
         }
-        return book;
+        return 0;
+    }
+
+    @Override
+    public Optional<Book> getByName(String name, Connection conn) throws SQLException {
+        String sql = "SELECT * FROM books WHERE name = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Book book = new Book();
+                    book.setId(rs.getInt("book_id"));
+                    book.setName(rs.getString("name"));
+                    book.setNxb(rs.getInt("nxb"));
+                    return Optional.of(book);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
     public int updateOne(Book object, Connection conn) throws SQLException {
-        int result = 0;
-        return result;
+        String sql = "UPDATE books SET name = ?, nxb = ? WHERE book_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, object.getName());
+            ps.setInt(2, object.getNxb());
+            ps.setInt(3, object.getId());
+            return ps.executeUpdate();
+        }
     }
 
     @Override
     public int deleteOne(String name, Connection conn) throws SQLException {
-        int result = 0;
         String sql = "DELETE FROM books WHERE name = ?";
-
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
-            result = ps.executeUpdate();
+            return ps.executeUpdate();
         }
-
-        return result;
     }
 
     @Override
     public List<Book> getAll(Connection conn) throws SQLException {
-        List<Book> books = new ArrayList<Book>();
+        List<Book> books = new ArrayList<>();
         String sql = "SELECT * FROM books";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
-            ResultSet rs = ps.executeQuery();
-            while(rs.next()) {
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
                 Book book = new Book();
                 book.setId(rs.getInt("book_id"));
                 book.setName(rs.getString("name"));
                 book.setNxb(rs.getInt("nxb"));
                 books.add(book);
             }
-        }catch (SQLException e) {
-            JDBCUtil.getInstance().printSQLException(e);
         }
         return books;
     }

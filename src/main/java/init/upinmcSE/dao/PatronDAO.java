@@ -1,58 +1,54 @@
 package init.upinmcSE.dao;
 
-import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Patron;
 
-import java.awt.print.Book;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class PatronDAO implements DAOInterface<Patron> {
+    private static final PatronDAO INSTANCE = new PatronDAO();
+    private PatronDAO() {}
 
-    public static PatronDAO getInstance() { return new PatronDAO(); }
-
-    @Override
-    public int insertOne(Patron object, Connection conn) {
-        int patronId = 0;
-        String sql = "INSERT INTO patrons (name, age) VALUES(?,?)";
-
-        try(PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, object.getName());
-            ps.setInt(2, object.getAge());
-
-            int rowsAffected = ps.executeUpdate();
-            if(rowsAffected > 0) {
-                try(ResultSet rs = ps.getGeneratedKeys()) {
-                    if(rs.next()) {
-                        patronId = rs.getInt(1);
-                    }
-                }
-            }
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
-        }
-        return patronId;
+    public static PatronDAO getInstance() {
+        return INSTANCE;
     }
 
     @Override
-    public Patron getByName(String name, Connection conn) {
-        Patron patron = null;
-        String sql = "SELECT * FROM patrons WHERE name = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setString(1, name);
-            ResultSet rs = ps.executeQuery();
-
-            if(rs.next()) {
-                patron = new Patron();
-                patron.setId(rs.getInt("patron_id"));
-                patron.setName(rs.getString("name"));
-                patron.setAge(rs.getInt("age"));
+    public int insertOne(Patron object, Connection conn) throws SQLException {
+        String sql = "INSERT INTO patrons (name, age) VALUES(?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, object.getName());
+            ps.setInt(2, object.getAge());
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
             }
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
         }
-        return patron;
+        return 0;
+    }
+
+    @Override
+    public Optional<Patron> getByName(String name, Connection conn) throws SQLException {
+        String sql = "SELECT * FROM patrons WHERE name = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Patron patron = new Patron();
+                    patron.setId(rs.getInt("patron_id"));
+                    patron.setName(rs.getString("name"));
+                    patron.setAge(rs.getInt("age"));
+                    return Optional.of(patron);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -66,7 +62,7 @@ public class PatronDAO implements DAOInterface<Patron> {
     }
 
     @Override
-    public List<Patron> getAll(Connection conn) {
+    public List<Patron> getAll(Connection conn) throws SQLException {
         List<Patron> patrons = null;
         String sql = "SELECT * FROM patrons";
         try(PreparedStatement ps = conn.prepareStatement(sql)){
@@ -80,8 +76,6 @@ public class PatronDAO implements DAOInterface<Patron> {
                 patron.setAge(rs.getInt("age"));
                 patrons.add(patron);
             }
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
         }
         return patrons;
     }

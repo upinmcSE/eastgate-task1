@@ -1,94 +1,92 @@
 package init.upinmcSE.dao;
 
-import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class AuthorDAO implements DAOInterface<Author> {
+    private static final AuthorDAO INSTANCE = new AuthorDAO();
 
-    public static AuthorDAO getInstance() {return new AuthorDAO();}
+    private AuthorDAO() {}
+
+    public static AuthorDAO getInstance() {
+        return INSTANCE;
+    }
 
     @Override
-    public Author getByName(String name, Connection conn) throws SQLException {
-        Author author = null;
+    public Optional<Author> getByName(String name, Connection conn) throws SQLException {
         String sql = "SELECT * FROM authors WHERE name = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                author = new Author();
-                author.setId(rs.getInt("author_id"));
-                author.setName(rs.getString("name"));
-                author.setAge(rs.getInt("age"));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Author author = new Author();
+                    author.setId(rs.getInt("author_id"));
+                    author.setName(rs.getString("name"));
+                    author.setAge(rs.getInt("age"));
+                    return Optional.of(author);
+                }
             }
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
         }
-        return author;
+        return Optional.empty();
     }
 
     @Override
     public int insertOne(Author object, Connection conn) throws SQLException {
-        int result = 0;
-        String sql = "INSERT INTO authors (name, age) VALUES(?,?)";
-        try(PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+        String sql = "INSERT INTO authors (name, age) VALUES(?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, object.getName());
             ps.setInt(2, object.getAge());
 
-            result = ps.executeUpdate();
-            if(result > 0){
-                ResultSet rs = ps.getGeneratedKeys();
-                if(rs.next()){
-                    result = rs.getInt(1);
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1); // author_id
+                    }
                 }
             }
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
         }
-        return result;
+        return 0;
     }
 
     @Override
     public int updateOne(Author object, Connection conn) throws SQLException {
-        int result = 0;
-        return result;
+        String sql = "UPDATE authors SET name = ?, age = ? WHERE author_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, object.getName());
+            ps.setInt(2, object.getAge());
+            ps.setInt(3, object.getId());
+            return ps.executeUpdate();
+        }
     }
 
     @Override
     public int deleteOne(String name, Connection conn) throws SQLException {
         String sql = "DELETE FROM authors WHERE name = ?";
-        int result = 0;
-
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
-            result = ps.executeUpdate();
+            return ps.executeUpdate();
         }
-
-        return result;
     }
 
     @Override
     public List<Author> getAll(Connection conn) throws SQLException {
-        List<Author> authors = new ArrayList<Author>();
+        List<Author> authors = new ArrayList<>();
         String sql = "SELECT * FROM authors";
-
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
-            ResultSet rs = ps.executeQuery();
-            while(rs.next()){
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
                 Author author = new Author();
                 author.setId(rs.getInt("author_id"));
                 author.setName(rs.getString("name"));
                 author.setAge(rs.getInt("age"));
                 authors.add(author);
             }
-        }catch (SQLException e){
-            JDBCUtil.getInstance().printSQLException(e);
         }
-
         return authors;
     }
 

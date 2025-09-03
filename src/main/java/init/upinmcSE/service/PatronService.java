@@ -12,25 +12,31 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PatronService {
-    private final String NOTI = "Thêm mới độc giả thất bại";
-    private PatronDAO patronDAO;
-    private BookDAO bookDAO;
+    private static final PatronService INSTANCE = new PatronService();
+    private static final String NOTI = "Thêm mới độc giả thất bại";
 
-    public static PatronService getInstance() { return new PatronService(); }
+    private final PatronDAO patronDAO = PatronDAO.getInstance();
+    private final BookDAO bookDAO = BookDAO.getInstance();
+
+    private PatronService() {}
+
+    public static PatronService getInstance() {
+        return INSTANCE;
+    }
 
     public String addPatron(Patron patron) {
         String result = NOTI;
-        PatronDAO patronDAO = PatronDAO.getInstance();
         Connection conn = null;
         try{
             conn = JDBCUtil.getInstance().getConnection();
             conn.setAutoCommit(false);
 
-            Patron patron1 = patronDAO.getByName(patron.getName(), conn);
+            Optional<Patron> patron1 = patronDAO.getByName(patron.getName(), conn);
 
-            if(!Objects.isNull(patron1)) {
+            if(patron1.isPresent()) {
                 conn.rollback();
                 result = "Độc giả đã tồn tại";
                 return result;
@@ -48,33 +54,25 @@ public class PatronService {
         return result;
     }
 
-    public void getPatronByName(String name) {
-        PatronDAO patronDAO = PatronDAO.getInstance();
-
+    public Optional<Patron> getPatronByName(String name) {
         try(Connection conn = JDBCUtil.getInstance().getConnection()){
-            Patron patron = patronDAO.getByName(name, conn);
-
-            if(Objects.isNull(patron)) {
-                System.out.println("Không tồn tại độc giả với " + name);
-            }else{
-                System.out.println(patron);
+            Optional<Patron> patron = patronDAO.getByName(name, conn);
+            if(patron.isPresent()) {
+                return patron;
             }
         }catch (SQLException e){
             JDBCUtil.getInstance().printSQLException(e);
         }
+        return Optional.empty();
     }
 
     public void getAllPatrons() {
-        PatronDAO patronDAO = PatronDAO.getInstance();
-
         try(Connection conn = JDBCUtil.getInstance().getConnection()){
             List<Patron> patrons = patronDAO.getAll(conn);
-            if(Objects.isNull(patrons)) {
+            if (patrons.isEmpty()) {
                 System.out.println("Không tồn tại độc giả nào");
-            }else{
-                for (Patron patron : patrons) {
-                    System.out.println(patron);
-                }
+            } else {
+                patrons.forEach(System.out::println);
             }
         }catch (SQLException e){
             JDBCUtil.getInstance().printSQLException(e);
@@ -82,35 +80,31 @@ public class PatronService {
     }
 
     public void borrowBook(Patron patron, Book book) {
-        bookDAO = BookDAO.getInstance();
-        patronDAO = PatronDAO.getInstance();
         Connection conn = null;
-
         String sql = "INSERT INTO patron_book (patron_id, book_id, status) VALUES (?, ?, ?)";
-
         try{
             conn = JDBCUtil.getInstance().getConnection();
             conn.setAutoCommit(false);
 
             // check book exist
-            Book bookCheck = bookDAO.getByName(book.getName(), conn);
-            if(Objects.isNull(bookCheck)) {
+            Optional<Book> bookCheck = bookDAO.getByName(book.getName(), conn);
+            if(bookCheck.isEmpty()) {
                 conn.rollback();
                 System.out.println("Book tên " + book.getName() + " không tồn tại");
                 return;
             }
 
             // check patron exist
-            Patron patronCheck = patronDAO.getByName(patron.getName(), conn);
-            if(Objects.isNull(patronCheck)) {
+            Optional<Patron> patronCheck = patronDAO.getByName(patron.getName(), conn);
+            if(patronCheck.isEmpty()) {
                 conn.rollback();
                 System.out.println("Patron tên " + patron.getName() + " không tồn tại");
                 return;
             }
 
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, patronCheck.getId());
-            ps.setInt(2, bookCheck.getId());
+            ps.setInt(1, patronCheck.get().getId());
+            ps.setInt(2, bookCheck.get().getId());
             ps.setString(3, "ON");
 
             ps.executeUpdate();

@@ -10,36 +10,35 @@ import init.upinmcSE.model.Book;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Logger;
 
 public class BookService {
+    private static final Logger LOGGER = Logger.getLogger(BookService.class.getName());
+    private static final BookService INSTANCE = new BookService();
+    private final BookDAO bookDAO = BookDAO.getInstance();
+    private final AuthorDAO authorDAO = AuthorDAO.getInstance();
+    private final BookAuthorDAO bookAuthorDAO = BookAuthorDAO.getInstance();
     private final String NOTI = "Thêm mới book thất bại";
-    private BookDAO bookDAO;
-    private AuthorDAO authorDAO;
-    private BookAuthorDAO bookAuthorDAO;
+
+    private BookService() {}
 
     public static BookService getInstance() {
-        return new BookService();
+        return INSTANCE;
     }
 
     public String insertBook(Book book) {
         String result = NOTI;
-        bookDAO = BookDAO.getInstance();
-        authorDAO = AuthorDAO.getInstance();
-        bookAuthorDAO = BookAuthorDAO.getInstance();
-
-        Connection conn = null;
-        try {
-            conn = JDBCUtil.getInstance().getConnection();
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
             conn.setAutoCommit(false);
 
-            Book bookSearch = bookDAO.getByName(book.getName(), conn);
-            int bookId = 0;
-            if(Objects.isNull(bookSearch)) {
-                bookId = bookDAO.insertOne(book, conn);
-            }else{
+            Optional<Book> bookSearch = bookDAO.getByName(book.getName(), conn);
+            int bookId;
+            if (bookSearch.isPresent()) {
                 conn.rollback();
                 return "Book với tên " + book.getName() + " đã tồn tại";
+            } else {
+                bookId = bookDAO.insertOne(book, conn);
             }
 
             if (bookId == 0) {
@@ -48,13 +47,13 @@ public class BookService {
             }
 
             for (Author author : book.getAuthors()) {
-                int authorId = 0;
-                Author a = authorDAO.getByName(author.getName(), conn);
+                int authorId;
+                Optional<Author> existingAuthor = authorDAO.getByName(author.getName(), conn);
 
-                if(Objects.isNull(a)){
+                if (existingAuthor.isPresent()) {
+                    authorId = existingAuthor.get().getId();
+                } else {
                     authorId = authorDAO.insertOne(author, conn);
-                }else{
-                    authorId = a.getId();
                 }
 
                 if (authorId == 0) {
@@ -71,67 +70,43 @@ public class BookService {
 
             conn.commit();
             result = "Đã thêm thành công book với id: " + bookId;
-        }catch (SQLException e) {
-            JDBCUtil.getInstance().rollback(conn);
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
-        } finally {
-            JDBCUtil.getInstance().closeConnection(conn);
         }
         return result;
     }
 
-    public void getBookByName(String name){
-        BookDAO bookDAO = BookDAO.getInstance();
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-            Book book = bookDAO.getByName(name, conn);
-            if(Objects.isNull(book)){
-                System.out.println("Không tồn tại book với tên " + name);
-            }else{
-                System.out.println(book);
-            }
-        }catch (SQLException e) {
+    public Optional<Book> getBookByName(String name) {
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+            return bookDAO.getByName(name, conn);
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
+            return Optional.empty();
         }
     }
 
-    public void getAllBooks(){
-        BookDAO bookDAO = BookDAO.getInstance();
-        List<Book> books = null;
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-            books = bookDAO.getAll(conn);
-
-            if(Objects.isNull(books)){
-                System.out.println("Không tồn tại books nào");
-            }else{
-                for (Book book : books) {
-                    System.out.println(book);
-                };
-            }
-        }catch (SQLException e) {
+    public List<Book> getAllBooks() {
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+            return bookDAO.getAll(conn);
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
+            return List.of();
         }
     }
 
-    public void deleteBook(String name){
-        BookDAO bookDAO = BookDAO.getInstance();
-
-        try(Connection conn = JDBCUtil.getInstance().getConnection()){
-
-            Book book = bookDAO.getByName(name, conn);
-            if(Objects.isNull(book)){
-                System.out.println("Book với tên " + name + " không tồn tại");
-                return;
+    public boolean deleteBook(String name) {
+        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+            Optional<Book> book = bookDAO.getByName(name, conn);
+            if (book.isEmpty()) {
+                LOGGER.warning("Book với tên " + name + " không tồn tại");
+                return false;
             }
 
             int result = bookDAO.deleteOne(name, conn);
-            if(result <= 0){
-                System.out.println("Xóa book với name " + name + " không thành công");
-            }else{
-                System.out.println("Xóa book với name " + name + " thành công");
-            }
-        }catch (SQLException e) {
+            return result > 0;
+        } catch (SQLException e) {
             JDBCUtil.getInstance().printSQLException(e);
+            return false;
         }
     }
 }

@@ -48,13 +48,17 @@ public class JDBCUtil {
     }
 
     public void closeConnection(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.setAutoCommit(true);
-                conn.close();
-            } catch (SQLException e) {
-                JDBCUtil.getInstance().printSQLException(e);
+        try {
+            if (conn != null && conn.isClosed()) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    JDBCUtil.getInstance().printSQLException(e);
+                }
             }
+        } catch (SQLException e) {
+            JDBCUtil.getInstance().printSQLException(e);
         }
     }
 }

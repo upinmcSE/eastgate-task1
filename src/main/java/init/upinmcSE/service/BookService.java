@@ -1,48 +1,57 @@
 package init.upinmcSE.service;
 
 import init.upinmcSE.dao.AuthorDAO;
-import init.upinmcSE.dao.BookAuthorDAO;
 import init.upinmcSE.dao.BookDAO;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 import init.upinmcSE.model.Book;
+import init.upinmcSE.repository.jdbc.AuthorJdbcRepository;
+import init.upinmcSE.repository.jdbc.BookJdbcRepository;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class BookService {
     private static final Logger LOGGER = Logger.getLogger(BookService.class.getName());
-    private static final BookService INSTANCE = new BookService();
-    private final BookDAO bookDAO = BookDAO.getInstance();
-    private final AuthorDAO authorDAO = AuthorDAO.getInstance();
-    private final BookAuthorDAO bookAuthorDAO = BookAuthorDAO.getInstance();
-    private final String NOTI = "Thêm mới book thất bại";
+    private static final BookService INSTANCE = new BookService(BookJdbcRepository.getInstance(), AuthorJdbcRepository.getInstance() );
+    private final BookDAO bookDAO;
+    private final AuthorDAO authorDAO;
 
-    private BookService() {}
+    public BookService(BookDAO bookDAO, AuthorDAO authorDAO) {
+        this.bookDAO = bookDAO;
+        this.authorDAO = authorDAO;
+    }
 
     public static BookService getInstance() {
         return INSTANCE;
     }
 
-    public String insertBook(Book book) {
-        String result = NOTI;
-        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+    public Integer insertBook(Book book) {
+        if(Objects.isNull(book)) {
+            LOGGER.warning("Book is null");
+            return 0;
+        }
+        int result = 0;
+        Connection conn = null;
+        try {
+            conn = JDBCUtil.getInstance().getConnection();
             conn.setAutoCommit(false);
 
             Optional<Book> bookSearch = bookDAO.getByName(book.getName(), conn);
             int bookId;
             if (bookSearch.isPresent()) {
                 conn.rollback();
-                return "Book với tên " + book.getName() + " đã tồn tại";
+                LOGGER.info("Book exists");
+                return bookSearch.get().getId();
             } else {
-                bookId = bookDAO.insertOne(book, conn);
+                bookId = bookDAO.insertOne(book, conn).getId();
             }
 
             if (bookId == 0) {
                 conn.rollback();
+                LOGGER.warning("Add new book failed");
                 return result;
             }
 
@@ -53,25 +62,30 @@ public class BookService {
                 if (existingAuthor.isPresent()) {
                     authorId = existingAuthor.get().getId();
                 } else {
-                    authorId = authorDAO.insertOne(author, conn);
+                    authorId = authorDAO.insertOne(author, conn).getId();
                 }
 
                 if (authorId == 0) {
                     conn.rollback();
+                    LOGGER.warning("Add author failed");
                     return result;
                 }
 
-                int relationResult = bookAuthorDAO.insertRelation(bookId, authorId, conn);
+                int relationResult = bookDAO.insertRelation(bookId, authorId, conn);
                 if (relationResult == 0) {
                     conn.rollback();
+                    LOGGER.warning("Add relative book-author failed");
                     return result;
                 }
             }
 
             conn.commit();
-            result = "Đã thêm thành công book với id: " + bookId;
+            result = bookId;
         } catch (SQLException e) {
+            JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
+        }finally {
+            JDBCUtil.getInstance().closeConnection(conn);
         }
         return result;
     }
@@ -95,18 +109,61 @@ public class BookService {
     }
 
     public boolean deleteBook(String name) {
-        try (Connection conn = JDBCUtil.getInstance().getConnection()) {
+        Connection conn = null;
+        try {
+            conn = JDBCUtil.getInstance().getConnection();
+            conn.setAutoCommit(false);
+
             Optional<Book> book = bookDAO.getByName(name, conn);
             if (book.isEmpty()) {
-                LOGGER.warning("Book với tên " + name + " không tồn tại");
+                conn.rollback();
+                LOGGER.warning("Book with name: " + name + " not exist");
                 return false;
             }
 
-            int result = bookDAO.deleteOne(name, conn);
-            return result > 0;
+            bookDAO.deleteOne(book.get().getId(), conn);
+            conn.commit();
+            return true;
         } catch (SQLException e) {
+            JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
             return false;
+        }finally {
+            JDBCUtil.getInstance().closeConnection(conn);
         }
+    }
+
+    public List<Book> getBookByAuthor(Author author) {
+        List<Book> books = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = JDBCUtil.getInstance().getConnection();
+            conn.setAutoCommit(false);
+
+            // check author exist
+            Optional<Author> checkAuthor = authorDAO.getByName(author.getName(), conn);
+            if (checkAuthor.isEmpty()) {
+                conn.rollback();
+                LOGGER.warning("Author not found");
+                return List.of();
+            }
+
+            // get books by author
+            books = bookDAO.getBookByAuthor(checkAuthor.get().getId(), conn);
+            if (books.isEmpty()) {
+                conn.commit();
+                LOGGER.warning("Book not found");
+                return List.of();
+            }
+
+            conn.commit();
+            return books;
+        }catch (SQLException e){
+            JDBCUtil.getInstance().rollback(conn);
+            JDBCUtil.getInstance().printSQLException(e);
+        }finally {
+            JDBCUtil.getInstance().closeConnection(conn);
+        }
+        return books;
     }
 }

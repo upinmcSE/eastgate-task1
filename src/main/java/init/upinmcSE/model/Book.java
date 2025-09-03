@@ -6,20 +6,26 @@ public class Book {
     private int id;
     private String name;
     private int nxb;
+    private int availableCount;
+    private int borrowedCount;
     private List<Author> authors;
 
     public Book(){}
 
-    public Book(String name, int nxb, List<Author> authors) {
+    public Book(String name, int nxb, int availableCount, int borrowedCount, List<Author> authors) {
         this.name = name;
         this.nxb = nxb;
+        this.availableCount = availableCount;
+        this.borrowedCount = borrowedCount;
         this.authors = authors;
     }
 
-    public Book(int id, String name, int nxb, List<Author> authors) {
+    public Book(int id, String name, int nxb, int availableCount, int borrowedCount, List<Author> authors) {
         this.id = id;
         this.name = name;
         this.nxb = nxb;
+        this.availableCount = availableCount;
+        this.borrowedCount = borrowedCount;
         this.authors = authors;
     }
 
@@ -55,12 +61,31 @@ public class Book {
         this.authors = authors;
     }
 
+    public int getAvailableCount() {
+        return this.availableCount;
+    }
+
+    public void setAvailableCount(int availableCount) {
+        this.availableCount = availableCount;
+    }
+
+    public int getBorrowedCount() {
+        return this.borrowedCount;
+    }
+
+    public void setBorrowedCount(int borrowedCount) {
+        this.borrowedCount = borrowedCount;
+    }
+
     @Override
     public String toString() {
         return "Book{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", nxb='" + nxb + '\'' +
+                ", nxb=" + nxb +
+                ", availableCount=" + availableCount +
+                ", borrowedCount=" + borrowedCount +
+                ", authors=" + authors +
                 '}';
     }
 }

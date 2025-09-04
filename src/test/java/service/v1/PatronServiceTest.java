@@ -1,4 +1,4 @@
-package service;
+package service.v1;
 
 import init.upinmcSE.dao.BookDAO;
 import init.upinmcSE.dao.PatronDAO;
@@ -18,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,7 +53,7 @@ class PatronServiceTest {
     }
 
     @Test
-    void testInsertPatron_Success() throws SQLException {
+    void testInsertPatron_Success() throws Exception {
         Patron patron = new Patron(1, "A", 22);
 
         when(patronDAO.getByName(eq("A"), any(Connection.class)))
@@ -69,7 +70,7 @@ class PatronServiceTest {
     }
 
     @Test
-    void testInsertPatron_Failure() throws SQLException {
+    void testInsertPatron_Failure() throws Exception {
         Patron patron = new Patron(1, "A", 22);
 
         when(patronDAO.getByName(eq("A"), any(Connection.class)))
@@ -82,7 +83,7 @@ class PatronServiceTest {
     }
 
     @Test
-    void testInsertPatron_Null() throws SQLException {
+    void testInsertPatron_Null() throws Exception {
         int result = patronService.insertPatron(null);
         assertEquals(0, result);
 
@@ -91,7 +92,7 @@ class PatronServiceTest {
     }
 
     @Test
-    void testGetPatronByName_Success() throws SQLException {
+    void testGetPatronByName_Success() throws Exception {
         Patron patron = new Patron(1, "A", 22);
         when(patronDAO.getByName(eq("A"), any(Connection.class)))
                 .thenReturn(Optional.of(patron));
@@ -102,7 +103,7 @@ class PatronServiceTest {
     }
 
     @Test
-    void testGetPatronByName_NotFound() throws SQLException {
+    void testGetPatronByName_NotFound() throws Exception {
         Patron patron = new Patron(1, "A", 22);
         when(patronDAO.getByName(eq("A"), any(Connection.class)))
             .thenReturn(Optional.empty());
@@ -113,9 +114,9 @@ class PatronServiceTest {
     }
 
     @Test
-    void testBorrowBook_Success() throws SQLException {
+    void testBorrowBook_Success() throws Exception {
         Patron patron = new Patron(1, "PatronA", 25);
-        Book book = new Book(10, "BookA", 2003, 8, 2, 0, List.of());
+        Book book = new Book(10, "BookA", 2003, 8, 2, 0, Set.of());
 
         try (MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
             mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
@@ -158,9 +159,9 @@ class PatronServiceTest {
     }
 
     @Test
-    void testBorrowBook_BookNotFound() throws SQLException {
+    void testBorrowBook_BookNotFound() throws Exception {
         Patron patron = new Patron(1, "A", 20);
-        Book book = new Book(1, "BookA", 2020, 1, 0, 0, List.of());
+        Book book = new Book(1, "BookA", 2020, 1, 0, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookA"), any())).thenReturn(Optional.empty());
 
@@ -174,9 +175,9 @@ class PatronServiceTest {
     }
 
     @Test
-    void testBorrowBook_PatronNotFound() throws SQLException {
+    void testBorrowBook_PatronNotFound() throws Exception {
         Patron patron = new Patron(1, "A", 20);
-        Book book = new Book(1, "BookA", 2020, 1, 0, 0, List.of());
+        Book book = new Book(1, "BookA", 2020, 1, 0, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookA"), any())).thenReturn(Optional.of(book));
         when(patronDAO.getByName(eq("A"), any())).thenReturn(Optional.empty());
@@ -192,9 +193,9 @@ class PatronServiceTest {
     }
 
     @Test
-    void testBorrowBook_NotAvailable() throws SQLException {
+    void testBorrowBook_NotAvailable() throws Exception {
         Patron patron = new Patron(1, "A", 20);
-        Book book = new Book(1, "BookA", 2020, 2, 1, 0, List.of());
+        Book book = new Book(1, "BookA", 2020, 2, 1, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookA"), any())).thenReturn(Optional.of(book));
         when(patronDAO.getByName(eq("A"), any())).thenReturn(Optional.of(patron));
@@ -209,9 +210,9 @@ class PatronServiceTest {
     }
 
     @Test
-    void testBorrowBook_OnBorrowed() throws SQLException {
+    void testBorrowBook_OnBorrowed() throws Exception {
         Patron patron = new Patron(1, "A", 20);
-        Book book = new Book(1, "BookA", 2020, 1, 0, 0, List.of());
+        Book book = new Book(1, "BookA", 2020, 1, 0, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookA"), any())).thenReturn(Optional.of(book));
         when(patronDAO.getByName(eq("A"), any())).thenReturn(Optional.of(patron));
@@ -228,9 +229,9 @@ class PatronServiceTest {
     }
 
     @Test
-    void testBorrowBook_SQLException() throws SQLException {
+    void testBorrowBook_SQLException() throws Exception {
         Patron patron = new Patron(1, "A", 20);
-        Book book = new Book(1, "BookA", 2020, 1, 0, 0, List.of());
+        Book book = new Book(1, "BookA", 2020, 1, 0, 0, Set.of());
 
         try(MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)){
             mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
@@ -256,10 +257,10 @@ class PatronServiceTest {
     }
 
     @Test
-    void testReturnBook_Success() throws SQLException {
+    void testReturnBook_Success() throws Exception {
         // Arrange
         Patron patron = new Patron(1, "PatronA", 25);
-        Book book = new Book(10, "BookA", 2003, 8, 2, 0, List.of());
+        Book book = new Book(10, "BookA", 2003, 8, 2, 0, Set.of());
 
         try (MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
             mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
@@ -296,9 +297,9 @@ class PatronServiceTest {
 
 
     @Test
-    void testReturnBook_NotBorrowed() throws SQLException {
+    void testReturnBook_NotBorrowed() throws Exception {
         Patron patron = new Patron(1, "A", 20);
-        Book book = new Book(1, "BookA", 2020, 0, 1, 0, List.of());
+        Book book = new Book(1, "BookA", 2020, 0, 1, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookA"), any())).thenReturn(Optional.of(book));
         when(patronDAO.getByName(eq("A"), any())).thenReturn(Optional.of(patron));

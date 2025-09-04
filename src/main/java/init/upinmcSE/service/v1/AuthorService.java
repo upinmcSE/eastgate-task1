@@ -72,7 +72,7 @@ public class AuthorService {
                 LOGGER.warning("Không tồn tại author với tên " + name);
                 return;
             }
-            authorDAO.deleteOne(author.get().getId(), conn);
+            authorDAO.deleteOne(author.get(), conn);
         } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
         }

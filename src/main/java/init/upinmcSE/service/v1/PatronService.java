@@ -19,22 +19,17 @@ import java.util.logging.Logger;
 
 public class PatronService {
     private static final Logger LOGGER = Logger.getLogger(AuthorService.class.getName());
-    private static final PatronService INSTANCE = new PatronService(
-            PatronJdbcRepository.getInstance(), BookJdbcRepository.getInstance());
     private static final String NOTI = "Thêm mới độc giả thất bại";
-
     private PatronDAO patronDAO;
     private BookDAO bookDAO;
 
+    public PatronService() {}
 
     public PatronService(PatronDAO patronDAO, BookDAO bookDAO) {
         this.patronDAO = patronDAO;
         this.bookDAO = bookDAO;
     }
 
-    public static PatronService getInstance() {
-        return INSTANCE;
-    }
 
     public Integer insertPatron(Patron patron) {
         if(Objects.isNull(patron)) {
@@ -49,14 +44,13 @@ public class PatronService {
             Optional<Patron> patron1 = patronDAO.getByName(patron.getName(), conn);
 
             if(patron1.isPresent()) {
-                conn.rollback();
                 return 0;
             }
 
-            int patronId = patronDAO.insertOne(patron, conn).getId();
+            Patron insertPatron = (Patron) patronDAO.insertOne(patron, conn);
             conn.commit();
-            return patronId;
-        }catch (SQLException e){
+            return insertPatron.getId();
+        }catch (Exception e){
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
         }finally {
@@ -71,7 +65,7 @@ public class PatronService {
             if(patron.isPresent()) {
                 return patron;
             }
-        }catch (SQLException e){
+        }catch (Exception e){
             JDBCUtil.getInstance().printSQLException(e);
         }
         return Optional.empty();
@@ -85,7 +79,7 @@ public class PatronService {
             } else {
                 patrons.forEach(System.out::println);
             }
-        }catch (SQLException e){
+        }catch (Exception e){
             JDBCUtil.getInstance().printSQLException(e);
         }
     }
@@ -148,7 +142,7 @@ public class PatronService {
 
             conn.commit();
             return "Borrowed book successfully";
-        }catch (SQLException e){
+        }catch (Exception e){
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
         }finally {
@@ -196,7 +190,7 @@ public class PatronService {
 
             conn.commit();
             return "Return successfully";
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
         } finally {
@@ -212,12 +206,13 @@ public class PatronService {
         }
 
         Connection conn = null;
-        String atomicUpdateSql = """
+        String atomicUpdateSql =
+        """
         UPDATE books 
         SET available_count = available_count - 1, 
             borrowed_count = borrowed_count + 1, 
             version = version + 1 
-        WHERE id = ? 
+        WHERE id = ?    
         AND version = ? 
         AND available_count > 0
         """;
@@ -269,7 +264,7 @@ public class PatronService {
 
             conn.commit();
             return "Borrowed book successfully";
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
             return "Database error occurred";
@@ -364,7 +359,7 @@ public class PatronService {
 
             conn.commit();
             return "Borrowed book successfully";
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
             return "Database error occurred";

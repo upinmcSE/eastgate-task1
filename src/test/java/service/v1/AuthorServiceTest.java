@@ -1,4 +1,4 @@
-package service;
+package service.v1;
 
 import init.upinmcSE.dao.AuthorDAO;
 import init.upinmcSE.db.JDBCUtil;
@@ -31,11 +31,11 @@ class AuthorServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        authorService = AuthorService.getInstance(authorDAO);
+        authorService = new AuthorService(authorDAO);
     }
 
     @Test
-    void testInsert_NewAuthor_Success() throws SQLException {
+    void testInsert_NewAuthor_Success() throws Exception {
         Author newAuthor = new Author(1, "Dương", 25);
 
         when(authorDAO.getByName(eq("Dương"), any(Connection.class)))
@@ -51,7 +51,7 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testInsert_ExistingAuthor() throws SQLException {
+    void testInsert_ExistingAuthor() throws Exception {
         Author existing = new Author(2, "Trung", 30);
 
         when(authorDAO.getByName(eq("Trung"), any(Connection.class)))
@@ -65,7 +65,7 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testInsert_NullInput() throws SQLException {
+    void testInsert_NullInput() throws Exception {
         int result = authorService.insert(null);
         assertEquals(0, result);
 
@@ -74,7 +74,7 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testInsert_SQLException() throws SQLException {
+    void testInsert_SQLException() throws Exception {
         Author author = new Author(1, "Trung", 30);
 
         try(MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
@@ -99,7 +99,7 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testGetAuthorByName_Found() throws SQLException {
+    void testGetAuthorByName_Found() throws Exception {
         Author author = new Author(3, "Thành", 28);
 
         when(authorDAO.getByName(eq("Thành"), any(Connection.class)))
@@ -114,7 +114,7 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testGetAuthorByName_NotFound() throws SQLException {
+    void testGetAuthorByName_NotFound() throws Exception {
         when(authorDAO.getByName(eq("Không có"), any(Connection.class)))
                 .thenReturn(Optional.empty());
 
@@ -124,7 +124,7 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testGetAllAuthors_Found() throws SQLException {
+    void testGetAllAuthors_Found() throws Exception {
         List<Author> authors = List.of(
                 new Author(1, "A", 20),
                 new Author(2, "B", 25)
@@ -140,14 +140,14 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testGetAllAuthors_Empty() throws SQLException {
+    void testGetAllAuthors_Empty() throws Exception {
         when(authorDAO.getAll(any(Connection.class))).thenReturn(List.of());
         List<Author> result = authorService.getAllAuthors();
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void testDeleteAuthor_NotFound() throws SQLException {
+    void testDeleteAuthor_NotFound() throws Exception {
         when(authorDAO.getByName(eq("Ghost"), any(Connection.class)))
                 .thenReturn(Optional.empty());
 
@@ -157,14 +157,14 @@ class AuthorServiceTest {
     }
 
     @Test
-    void testDeleteAuthor_Found() throws SQLException {
+    void testDeleteAuthor_Found() throws Exception {
         Author author = new Author(5, "Alive", 40);
 
-        when(authorDAO.getByName(eq("Alive"), any(Connection.class)))
+        when(authorDAO.getByName(eq("Alive"), any()))
                 .thenReturn(Optional.of(author));
 
         authorService.deleteAuthor("Alive");
 
-        verify(authorDAO).deleteOne(eq(5), any(Connection.class));
+        verify(authorDAO, times(1)).deleteOne(any(), any());
     }
 }

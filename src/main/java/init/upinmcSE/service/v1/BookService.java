@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 
 public class BookService {
     private static final Logger LOGGER = Logger.getLogger(BookService.class.getName());
-    private static final BookService INSTANCE = new BookService(BookJdbcRepository.getInstance(), AuthorJdbcRepository.getInstance() );
     private final BookDAO bookDAO;
     private final AuthorDAO authorDAO;
 
@@ -24,6 +23,7 @@ public class BookService {
         this.authorDAO = authorDAO;
     }
 
+    private static final BookService INSTANCE = new BookService(BookJdbcRepository.getInstance(), AuthorJdbcRepository.getInstance() );
     public static BookService getInstance() {
         return INSTANCE;
     }
@@ -42,11 +42,11 @@ public class BookService {
             Optional<Book> bookSearch = bookDAO.getByName(book.getName(), conn);
             int bookId;
             if (bookSearch.isPresent()) {
-                conn.rollback();
                 LOGGER.info("Book exists");
                 return bookSearch.get().getId();
             } else {
-                bookId = bookDAO.insertOne(book, conn).getId();
+                Book insertBook = (Book) bookDAO.insertOne(book, conn);
+                bookId = insertBook.getId();
             }
 
             if (bookId == 0) {
@@ -62,7 +62,8 @@ public class BookService {
                 if (existingAuthor.isPresent()) {
                     authorId = existingAuthor.get().getId();
                 } else {
-                    authorId = authorDAO.insertOne(author, conn).getId();
+                    Author authorInsert = (Author) authorDAO.insertOne(author, conn);
+                    authorId = authorInsert.getId();
                 }
 
                 if (authorId == 0) {
@@ -70,8 +71,8 @@ public class BookService {
                     LOGGER.warning("Add author failed");
                     return result;
                 }
-
                 int relationResult = bookDAO.insertRelation(bookId, authorId, conn);
+                LOGGER.info(relationResult + " inserteddd");
                 if (relationResult == 0) {
                     conn.rollback();
                     LOGGER.warning("Add relative book-author failed");
@@ -81,7 +82,7 @@ public class BookService {
 
             conn.commit();
             result = bookId;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
         }finally {
@@ -93,7 +94,7 @@ public class BookService {
     public Optional<Book> getBookByName(String name) {
         try (Connection conn = JDBCUtil.getInstance().getConnection()) {
             return bookDAO.getByName(name, conn);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
             return Optional.empty();
         }
@@ -102,13 +103,13 @@ public class BookService {
     public List<Book> getAllBooks() {
         try (Connection conn = JDBCUtil.getInstance().getConnection()) {
             return bookDAO.getAll(conn);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
             return List.of();
         }
     }
 
-    public boolean deleteBook(String name) {
+    public void deleteBook(String name) {
         Connection conn = null;
         try {
             conn = JDBCUtil.getInstance().getConnection();
@@ -116,18 +117,15 @@ public class BookService {
 
             Optional<Book> book = bookDAO.getByName(name, conn);
             if (book.isEmpty()) {
-                conn.rollback();
                 LOGGER.warning("Book with name: " + name + " not exist");
-                return false;
+                return;
             }
 
-            bookDAO.deleteOne(book.get().getId(), conn);
+            bookDAO.deleteOne(book.get(), conn);
             conn.commit();
-            return true;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
-            return false;
         }finally {
             JDBCUtil.getInstance().closeConnection(conn);
         }
@@ -135,34 +133,20 @@ public class BookService {
 
     public List<Book> getBookByAuthor(Author author) {
         List<Book> books = new ArrayList<>();
-        Connection conn = null;
-        try {
-            conn = JDBCUtil.getInstance().getConnection();
-            conn.setAutoCommit(false);
-
-            // check author exist
+        try(Connection conn = JDBCUtil.getInstance().getConnection()) {
             Optional<Author> checkAuthor = authorDAO.getByName(author.getName(), conn);
             if (checkAuthor.isEmpty()) {
-                conn.rollback();
                 LOGGER.warning("Author not found");
-                return List.of();
+                return books;
             }
 
-            // get books by author
             books = bookDAO.getBookByAuthor(checkAuthor.get().getId(), conn);
             if (books.isEmpty()) {
-                conn.commit();
                 LOGGER.warning("Book not found");
-                return List.of();
+                return books;
             }
-
-            conn.commit();
-            return books;
-        }catch (SQLException e){
-            JDBCUtil.getInstance().rollback(conn);
+        }catch (Exception e){
             JDBCUtil.getInstance().printSQLException(e);
-        }finally {
-            JDBCUtil.getInstance().closeConnection(conn);
         }
         return books;
     }

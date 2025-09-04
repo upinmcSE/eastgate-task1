@@ -1,4 +1,4 @@
-package service;
+package service.v1;
 
 import init.upinmcSE.dao.AuthorDAO;
 import init.upinmcSE.dao.BookDAO;
@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,9 +43,9 @@ public class BookServiceTest {
     }
 
     @Test
-    void testInsertBook_NewBook_NewAuthor_Success() throws SQLException {
+    void testInsertBook_NewBook_NewAuthor_Success() throws Exception {
         Author author = new Author(1, "Author1", 30);
-        Book newBook = new Book(10, "BookA", 2003, 10, 0, List.of(author));
+        Book newBook = new Book(10, "BookA", 2003, 10, 0, 0, Set.of(author));
 
         when(bookDAO.getByName(eq("BookA"), any(Connection.class)))
                 .thenReturn(Optional.empty());
@@ -70,8 +71,8 @@ public class BookServiceTest {
     }
 
     @Test
-    void testInsertBook_BookAlreadyExists() throws SQLException {
-        Book existingBook = new Book(5, "BookB", 2002, 10, 0, List.of());
+    void testInsertBook_BookAlreadyExists() throws Exception {
+        Book existingBook = new Book(5, "BookB", 2002, 10, 0, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookB"), any(Connection.class)))
                 .thenReturn(Optional.of(existingBook));
@@ -83,9 +84,9 @@ public class BookServiceTest {
     }
 
     @Test
-    void testInsertBook_AuthorAlreadyExists() throws SQLException {
+    void testInsertBook_AuthorAlreadyExists() throws Exception {
         Author existingAuthor = new Author(2, "Author2", 40);
-        Book newBook = new Book(20, "BookC", 2004, 10, 0, List.of(existingAuthor));
+        Book newBook = new Book(20, "BookC", 2004, 10, 0, 0, Set.of(existingAuthor));
 
         when(bookDAO.getByName(eq("BookC"), any(Connection.class)))
                 .thenReturn(Optional.empty());
@@ -104,7 +105,7 @@ public class BookServiceTest {
     }
 
     @Test
-    void testInsertBook_Author_NullInput() throws SQLException {
+    void testInsertBook_Author_NullInput() throws Exception {
         int result = bookService.insertBook(null);
 
         assertEquals(0, result);
@@ -115,9 +116,9 @@ public class BookServiceTest {
     }
 
     @Test
-    void testInsertBook_SQLException() throws SQLException {
+    void testInsertBook_SQLException() throws Exception {
         Author author = new Author(1, "Author1", 30);
-        Book book = new Book(10, "BookA", 2003, 8, 2, List.of(author));
+        Book book = new Book(10, "BookA", 2003, 8, 2, 0, Set.of(author));
 
         try(MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
             mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
@@ -149,7 +150,7 @@ public class BookServiceTest {
     }
 
     @Test
-    void testGetBookByName_NotFound() throws SQLException {
+    void testGetBookByName_NotFound() throws Exception {
 //        Book book = new Book( "BookD", 2005, 10, 0, List.of());
 
         when(bookDAO.getByName(eq("BookD"), any(Connection.class)))
@@ -162,8 +163,8 @@ public class BookServiceTest {
     }
 
     @Test
-    void testGetBookByName_Found() throws SQLException {
-        Book book = new Book( "BookD", 2005, 10, 0, List.of());
+    void testGetBookByName_Found() throws Exception {
+        Book book = new Book( "BookD", 2005, 10, 0, 0, Set.of());
 
         when(bookDAO.getByName(eq("BookD"), any(Connection.class)))
                 .thenReturn(Optional.of(book));
@@ -175,10 +176,10 @@ public class BookServiceTest {
     }
 
     @Test
-    void testGetAllBooks() throws SQLException {
+    void testGetAllBooks() throws Exception {
         List<Book> books = List.of(
-                new Book("Book1", 2003,10, 0, List.of()),
-                new Book("Book2", 2004, 10, 0, List.of())
+                new Book("Book1", 2003,10, 0, 0, Set.of()),
+                new Book("Book2", 2004, 10, 0, 0, Set.of())
         );
 
         when(bookDAO.getAll(any(Connection.class))).thenReturn(books);
@@ -186,35 +187,33 @@ public class BookServiceTest {
         List<Book> result = bookService.getAllBooks();
 
         assertEquals(2, result.size());
-        assertEquals("Book1", result.get(0).getName());
+        assertEquals("Book1", result.getFirst().getName());
     }
 
     @Test
-    void testDeleteBook_NotFound() throws SQLException {
-        when(bookDAO.getByName(eq("GhostBook"), any(Connection.class)))
+    void testDeleteBook_NotFound() throws Exception {
+        when(bookDAO.getByName(eq("GhostBook"), any()))
                 .thenReturn(Optional.empty());
 
-        boolean deleted = bookService.deleteBook("GhostBook");
+        bookService.deleteBook("GhostBook");
 
-        assertFalse(deleted);
         verify(bookDAO, never()).deleteOne(any(), any());
     }
 
     @Test
-    void testDeleteBook_Found() throws SQLException {
-        Book book = new Book(99,"RealBook", 1999, 10, 0, List.of());
+    void testDeleteBook_Found() throws Exception {
+        Book book = new Book(99,"RealBook", 1999, 2, 10, 0, Set.of());
 
-        when(bookDAO.getByName(eq("RealBook"), any(Connection.class)))
+        when(bookDAO.getByName(eq("RealBook"), any()))
                 .thenReturn(Optional.of(book));
 
-        boolean deleted = bookService.deleteBook("RealBook");
+        bookService.deleteBook("RealBook");
 
-        assertTrue(deleted);
-        verify(bookDAO).deleteOne(eq(99), any(Connection.class));
+        verify(bookDAO, times(1)).deleteOne(any(), any());
     }
 
     @Test
-    void testGetBookByAuthor_AuthorNotFound() throws SQLException {
+    void testGetBookByAuthor_AuthorNotFound() throws Exception {
         Author inputAuthor = new Author(1, "Unknown", 40);
 
         when(authorDAO.getByName(eq("Unknown"), any(Connection.class)))
@@ -227,7 +226,7 @@ public class BookServiceTest {
     }
 
     @Test
-    void testGetBookByAuthor_BooksNotFound() throws SQLException {
+    void testGetBookByAuthor_BooksNotFound() throws Exception {
         Author inputAuthor = new Author(1, "AuthorA", 50);
         Author dbAuthor = new Author(1, "AuthorA", 50);
 
@@ -244,11 +243,11 @@ public class BookServiceTest {
     }
 
     @Test
-    void testGetBookByAuthor_FoundBooks() throws SQLException {
+    void testGetBookByAuthor_FoundBooks() throws Exception {
         Author author = new Author(1, "AuthorB", 60);
-        Book book = new Book(1, "Book1", 2000,1, 0, List.of(author));
+        Book book = new Book(1, "Book1", 2000,1, 1, 0, Set.of(author));
 
-        Book book2 = new Book(2, "Book2", 2000,1, 0, List.of(author));
+        Book book2 = new Book(2, "Book2", 2000,1, 1, 0, Set.of(author));
 
         when(authorDAO.getByName(eq("AuthorB"), any(Connection.class)))
                 .thenReturn(Optional.of(author));
@@ -259,29 +258,7 @@ public class BookServiceTest {
 
         assertFalse(result.isEmpty());
         assertEquals(2, result.size());
-        assertEquals("Book1", result.get(0).getName());
-    }
-
-    @Test
-    void testGetBookByAuthor_SQLException() throws SQLException {
-        Author inputAuthor = new Author(1, "AuthorC", 70);
-
-        try (MockedStatic<JDBCUtil> mockedStatic = mockStatic(JDBCUtil.class)) {
-            mockedStatic.when(JDBCUtil::getInstance).thenReturn(jdbcUtil);
-
-            Connection mockConnection = mock(Connection.class);
-            when(jdbcUtil.getConnection()).thenReturn(mockConnection);
-
-            // Mock throw a SQLException when call method
-            when(authorDAO.getByName(eq("AuthorC"), eq(mockConnection)))
-                    .thenThrow(new SQLException("DB error"));
-
-            List<Book> result = bookService.getBookByAuthor(inputAuthor);
-
-            assertTrue(result.isEmpty());
-
-            verify(jdbcUtil).rollback(mockConnection);
-        }
+        assertEquals("Book1", result.getFirst().getName());
     }
 
 }

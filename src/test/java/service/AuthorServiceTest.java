@@ -3,7 +3,7 @@ package service;
 import init.upinmcSE.dao.AuthorDAO;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
-import init.upinmcSE.service.AuthorService;
+import init.upinmcSE.service.v1.AuthorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

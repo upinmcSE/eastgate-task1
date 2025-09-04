@@ -1,12 +1,10 @@
-package init.upinmcSE.service;
+package init.upinmcSE.service.v1;
 
 import init.upinmcSE.dao.AuthorDAO;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
-import init.upinmcSE.repository.jdbc.AuthorJdbcRepository;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,17 +16,6 @@ public class AuthorService {
 
     public AuthorService(AuthorDAO authorDAO) {
         this.authorDAO = authorDAO;
-    }
-
-    private static final AuthorService INSTANCE =
-            new AuthorService(AuthorJdbcRepository.getInstance());
-
-    public static AuthorService getInstance() {
-        return INSTANCE;
-    }
-
-    public static AuthorService getInstance(AuthorDAO authorDAO) {
-        return new AuthorService(authorDAO);
     }
 
     public Integer insert(Author author) {
@@ -45,14 +32,13 @@ public class AuthorService {
             Optional<Author> existingAuthor = authorDAO.getByName(author.getName(), conn);
 
             if (existingAuthor.isPresent()) {
-                conn.rollback();
                 return existingAuthor.get().getId();
             }
 
-            Author authorInsert = authorDAO.insertOne(author, conn);
+            Author authorInsert = (Author) authorDAO.insertOne(author, conn);
             conn.commit();
             result = authorInsert.getId();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().rollback(conn);
             JDBCUtil.getInstance().printSQLException(e);
         }finally {
@@ -64,7 +50,7 @@ public class AuthorService {
     public Optional<Author> getAuthorByName(String name) {
         try (Connection conn = JDBCUtil.getInstance().getConnection()) {
             return authorDAO.getByName(name, conn);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
             return Optional.empty();
         }
@@ -73,7 +59,7 @@ public class AuthorService {
     public List<Author> getAllAuthors() {
         try (Connection conn = JDBCUtil.getInstance().getConnection()) {
             return authorDAO.getAll(conn);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
             return List.of();
         }
@@ -87,7 +73,7 @@ public class AuthorService {
                 return;
             }
             authorDAO.deleteOne(author.get().getId(), conn);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
         }
     }

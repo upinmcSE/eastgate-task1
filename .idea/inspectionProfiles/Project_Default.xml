@@ -9,5 +9,6 @@
         <language minSize="78" name="Java" />
       </Languages>
     </inspection_tool>
+    <inspection_tool class="JpaAttributeTypeInspection" enabled="true" level="WARNING" enabled_by_default="true" editorAttributes="WARNING_ATTRIBUTES" />
   </profile>
 </component>

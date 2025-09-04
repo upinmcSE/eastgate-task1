@@ -1,12 +1,19 @@
 package init.upinmcSE.model;
 
+import javax.persistence.*;
 import java.util.List;
 
+@Entity
+@Table(name = "authors")
 public class Author {
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String name;
     private int age;
-//    private List<Book> books;
+
+    @ManyToMany(mappedBy = "authors")
+    private List<Book> books;
 
     public Author(){}
 
@@ -45,12 +52,12 @@ public class Author {
         this.age = age;
     }
 
-//    public List<Book> getBooks() {
-//        return books;
-//    }
-//    public void setBooks(List<Book> books) {
-//        this.books = books;
-//    }
+    public List<Book> getBooks() {
+        return books;
+    }
+    public void setBooks(List<Book> books) {
+        this.books = books;
+    }
 
     @Override
     public String toString() {
@@ -58,6 +65,7 @@ public class Author {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", age=" + age +
+                ", books=" + books +
                 '}';
     }
 }

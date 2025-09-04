@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class BookJdbcRepository implements BookDAO {
+public class BookJdbcRepository implements BookDAO<Connection> {
     private static final BookJdbcRepository INSTANCE = new BookJdbcRepository();
 
     public BookJdbcRepository() {}
@@ -125,10 +125,10 @@ public class BookJdbcRepository implements BookDAO {
     }
 
     @Override
-    public void deleteOne(Integer id, Connection conn) throws SQLException {
+    public void deleteOne(Book object, Connection conn) throws SQLException {
         String sql = "DELETE FROM books WHERE book_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
+            ps.setInt(1, object.getId());
             ps.executeUpdate();
         }
     }

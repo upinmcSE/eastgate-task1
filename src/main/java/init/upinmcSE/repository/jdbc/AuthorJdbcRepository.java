@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class AuthorJdbcRepository implements AuthorDAO {
+public class AuthorJdbcRepository implements AuthorDAO<Connection> {
     private static final AuthorJdbcRepository INSTANCE = new AuthorJdbcRepository();
 
     private AuthorJdbcRepository() {}
@@ -18,7 +18,7 @@ public class AuthorJdbcRepository implements AuthorDAO {
     }
 
     @Override
-    public Optional<Author> getByName(String name, Connection conn) throws SQLException {
+    public Optional<Author> getByName(String name, Connection conn) throws Exception {
         String sql = "SELECT * FROM authors WHERE name = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
@@ -36,7 +36,7 @@ public class AuthorJdbcRepository implements AuthorDAO {
     }
 
     @Override
-    public Author insertOne(Author object, Connection conn) throws SQLException {
+    public Author insertOne(Author object, Connection conn) throws Exception {
         String sql = "INSERT INTO authors (name, age) VALUES(?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, object.getName());
@@ -56,7 +56,7 @@ public class AuthorJdbcRepository implements AuthorDAO {
     }
 
     @Override
-    public Author updateOne(Author object, Connection conn) throws SQLException {
+    public Author updateOne(Author object, Connection conn) throws Exception {
         String sql = "UPDATE authors SET name = ?, age = ? WHERE author_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, object.getName());
@@ -69,16 +69,16 @@ public class AuthorJdbcRepository implements AuthorDAO {
     }
 
     @Override
-    public void deleteOne(Integer integer, Connection conn) throws SQLException {
+    public void deleteOne(Author object, Connection conn) throws Exception {
         String sql = "DELETE FROM authors WHERE author_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, integer);
+            ps.setInt(1, object.getId());
             ps.executeUpdate();
         }
     }
 
     @Override
-    public List<Author> getAll(Connection conn) throws SQLException {
+    public List<Author> getAll(Connection conn) throws Exception {
         List<Author> authors = new ArrayList<>();
         String sql = "SELECT * FROM authors";
         try (PreparedStatement ps = conn.prepareStatement(sql);

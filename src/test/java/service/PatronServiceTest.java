@@ -5,7 +5,7 @@ import init.upinmcSE.dao.PatronDAO;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Book;
 import init.upinmcSE.model.Patron;
-import init.upinmcSE.service.PatronService;
+import init.upinmcSE.service.v1.PatronService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

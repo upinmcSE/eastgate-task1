@@ -1,9 +1,20 @@
 package init.upinmcSE.model;
 
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "patrons")
 public class Patron {
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String name;
     private int age;
+
+    @OneToMany(mappedBy = "patron")
+    private List<PatronBook> patronBooks;
 
     public Patron() {}
 
@@ -50,4 +61,9 @@ public class Patron {
                 ", age=" + age +
                 '}';
     }
+
+    public List<PatronBook> getBooks() {
+        return patronBooks;
+    }
+
 }

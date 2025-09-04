@@ -21,19 +21,19 @@ public class JDBCUtil {
         return null;
     }
 
-    public void printSQLException(SQLException ex) {
-        for(Throwable e : ex){
-            if(e instanceof SQLException){
-                e.printStackTrace(System.err);
-                System.err.println("SQLState: " + ((SQLException)e).getSQLState());
-                System.err.println("Error Code: " + ((SQLException)e).getErrorCode());
-                System.err.println("Message: " + e.getMessage());
-                Throwable t = ex.getCause();
-                while(t != null){
-                    System.out.println("Cause: " + t);
-                    t = t.getCause();
-                }
+    public void printSQLException(Exception ex) {
+        if(ex instanceof SQLException){
+            ex.printStackTrace(System.err);
+            System.err.println("SQLState: " + ((SQLException) ex).getSQLState());
+            System.err.println("Error Code: " + ((SQLException) ex).getErrorCode());
+            System.err.println("Message: " + ex.getMessage());
+            Throwable t = ex.getCause();
+            while(t != null){
+                System.out.println("Cause: " + t);
+                t = t.getCause();
             }
+        }else{
+            ex.printStackTrace(System.err);
         }
     }
 
@@ -41,7 +41,7 @@ public class JDBCUtil {
         if (conn != null) {
             try {
                 conn.rollback();
-            } catch (SQLException rollbackEx) {
+            } catch (Exception rollbackEx) {
                 JDBCUtil.getInstance().printSQLException(rollbackEx);
             }
         }
@@ -53,11 +53,11 @@ public class JDBCUtil {
                 try {
                     conn.setAutoCommit(true);
                     conn.close();
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     JDBCUtil.getInstance().printSQLException(e);
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             JDBCUtil.getInstance().printSQLException(e);
         }
     }

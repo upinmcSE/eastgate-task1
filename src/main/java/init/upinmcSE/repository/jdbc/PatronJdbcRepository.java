@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PatronJdbcRepository implements PatronDAO {
+public class PatronJdbcRepository implements PatronDAO<Connection> {
     private static final PatronJdbcRepository INSTANCE = new PatronJdbcRepository();
 
     public PatronJdbcRepository() {}
@@ -61,7 +61,7 @@ public class PatronJdbcRepository implements PatronDAO {
     }
 
     @Override
-    public void deleteOne(Integer integer, Connection conn) throws SQLException {
+    public void deleteOne(Patron object, Connection conn) throws SQLException {
 
     }
 

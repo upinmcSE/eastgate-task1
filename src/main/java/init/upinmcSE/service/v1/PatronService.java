@@ -1,4 +1,4 @@
-package init.upinmcSE.service;
+package init.upinmcSE.service.v1;
 
 import init.upinmcSE.dao.BookDAO;
 import init.upinmcSE.dao.PatronDAO;

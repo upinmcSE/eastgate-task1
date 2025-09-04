@@ -1,7 +1,7 @@
 package service.v1;
 
-import init.upinmcSE.dao.BookDAO;
-import init.upinmcSE.dao.PatronDAO;
+import init.upinmcSE.repository.custom.BookRepository;
+import init.upinmcSE.repository.custom.PatronRepository;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Book;
 import init.upinmcSE.model.Patron;
@@ -16,7 +16,6 @@ import org.mockito.MockitoAnnotations;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,10 +27,10 @@ import static org.mockito.Mockito.*;
 
 class PatronServiceTest {
     @Mock
-    private PatronDAO patronDAO;
+    private PatronRepository patronDAO;
 
     @Mock
-    private BookDAO bookDAO;
+    private BookRepository bookDAO;
 
     @Mock
     private JDBCUtil jdbcUtil;

@@ -1,7 +1,7 @@
 package init.upinmcSE.service.v2;
 
-import init.upinmcSE.dao.AuthorDAO;
-import init.upinmcSE.dao.BookDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
+import init.upinmcSE.repository.custom.BookRepository;
 import init.upinmcSE.db.HibernateUtil;
 import init.upinmcSE.model.Author;
 import init.upinmcSE.model.Book;
@@ -17,10 +17,10 @@ import java.util.logging.Logger;
 public class BookService {
     private static final Logger LOGGER = Logger.getLogger(BookService.class.getName());
 
-    private BookDAO bookDAO;
-    private AuthorDAO authorDAO;
+    private BookRepository bookDAO;
+    private AuthorRepository authorDAO;
 
-    public BookService(BookDAO bookDAO, AuthorDAO authorDAO) {
+    public BookService(BookRepository bookDAO, AuthorRepository authorDAO) {
         this.bookDAO = bookDAO;
         this.authorDAO = authorDAO;
     }

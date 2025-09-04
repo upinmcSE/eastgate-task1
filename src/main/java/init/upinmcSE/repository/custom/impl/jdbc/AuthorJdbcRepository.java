@@ -1,6 +1,6 @@
-package init.upinmcSE.repository.jdbc;
+package init.upinmcSE.repository.custom.impl.jdbc;
 
-import init.upinmcSE.dao.AuthorDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
 import init.upinmcSE.model.Author;
 
 import java.sql.*;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class AuthorJdbcRepository implements AuthorDAO<Connection> {
+public class AuthorJdbcRepository implements AuthorRepository<Connection> {
     private static final AuthorJdbcRepository INSTANCE = new AuthorJdbcRepository();
 
     private AuthorJdbcRepository() {}

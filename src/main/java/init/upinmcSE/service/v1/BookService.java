@@ -1,24 +1,23 @@
 package init.upinmcSE.service.v1;
 
-import init.upinmcSE.dao.AuthorDAO;
-import init.upinmcSE.dao.BookDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
+import init.upinmcSE.repository.custom.BookRepository;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 import init.upinmcSE.model.Book;
-import init.upinmcSE.repository.jdbc.AuthorJdbcRepository;
-import init.upinmcSE.repository.jdbc.BookJdbcRepository;
+import init.upinmcSE.repository.custom.impl.jdbc.AuthorJdbcRepository;
+import init.upinmcSE.repository.custom.impl.jdbc.BookJdbcRepository;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
 
 public class BookService {
     private static final Logger LOGGER = Logger.getLogger(BookService.class.getName());
-    private final BookDAO bookDAO;
-    private final AuthorDAO authorDAO;
+    private final BookRepository bookDAO;
+    private final AuthorRepository authorDAO;
 
-    public BookService(BookDAO bookDAO, AuthorDAO authorDAO) {
+    public BookService(BookRepository bookDAO, AuthorRepository authorDAO) {
         this.bookDAO = bookDAO;
         this.authorDAO = authorDAO;
     }

@@ -1,6 +1,6 @@
 package init.upinmcSE.service.v2;
 
-import init.upinmcSE.dao.AuthorDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
 import init.upinmcSE.db.HibernateUtil;
 import init.upinmcSE.model.Author;
 import org.hibernate.Session;
@@ -14,9 +14,9 @@ import java.util.logging.Logger;
 public class AuthorService {
     private static final Logger LOGGER = Logger.getLogger(AuthorService.class.getName());
 
-    private AuthorDAO authorDAO;
+    private AuthorRepository authorDAO;
 
-    public AuthorService(AuthorDAO authorDAO) {
+    public AuthorService(AuthorRepository authorDAO) {
         this.authorDAO = authorDAO;
     }
 

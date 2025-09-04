@@ -1,9 +1,9 @@
-package init.upinmcSE.dao;
+package init.upinmcSE.repository;
 
 import java.util.List;
 
 
-public interface CrudDAO<T, C, ID> {
+public interface CrudRepository<T, C> {
     public T insertOne(T object, C conn) throws Exception;
     public T updateOne(T object, C conn) throws Exception;
     public void deleteOne(T object, C conn) throws Exception;

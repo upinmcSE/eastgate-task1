@@ -1,13 +1,13 @@
-package init.upinmcSE.repository.hibernate;
+package init.upinmcSE.repository.custom.impl.hibernate;
 
-import init.upinmcSE.dao.AuthorDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
 import init.upinmcSE.model.Author;
 import org.hibernate.Session;
 
 import java.util.List;
 import java.util.Optional;
 
-public class AuthorHibernateRepository implements AuthorDAO<Session> {
+public class AuthorHibernateRepository implements AuthorRepository<Session> {
     @Override
     public Optional<Author> getByName(String name, Session conn) throws Exception {
         Author author = conn.createQuery("FROM Author a WHERE a.name = :name", Author.class)

@@ -1,6 +1,6 @@
 package service.v1;
 
-import init.upinmcSE.dao.AuthorDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 import init.upinmcSE.service.v1.AuthorService;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 class AuthorServiceTest {
 
     @Mock
-    private AuthorDAO authorDAO;
+    private AuthorRepository authorDAO;
 
     @Mock
     private JDBCUtil jdbcUtil;

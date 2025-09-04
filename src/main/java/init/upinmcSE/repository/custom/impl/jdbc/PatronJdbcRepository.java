@@ -1,6 +1,6 @@
-package init.upinmcSE.repository.jdbc;
+package init.upinmcSE.repository.custom.impl.jdbc;
 
-import init.upinmcSE.dao.PatronDAO;
+import init.upinmcSE.repository.custom.PatronRepository;
 import init.upinmcSE.model.Book;
 import init.upinmcSE.model.Patron;
 
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PatronJdbcRepository implements PatronDAO<Connection> {
+public class PatronJdbcRepository implements PatronRepository<Connection> {
     private static final PatronJdbcRepository INSTANCE = new PatronJdbcRepository();
 
     public PatronJdbcRepository() {}

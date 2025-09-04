@@ -1,7 +1,7 @@
 package service.v1;
 
-import init.upinmcSE.dao.AuthorDAO;
-import init.upinmcSE.dao.BookDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
+import init.upinmcSE.repository.custom.BookRepository;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 import init.upinmcSE.model.Book;
@@ -26,10 +26,10 @@ import static org.mockito.Mockito.*;
 public class BookServiceTest {
 
     @Mock
-    private BookDAO bookDAO;
+    private BookRepository bookDAO;
 
     @Mock
-    private AuthorDAO authorDAO;
+    private AuthorRepository authorDAO;
 
     @Mock
     private JDBCUtil jdbcUtil;

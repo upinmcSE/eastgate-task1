@@ -1,12 +1,10 @@
 package init.upinmcSE.service.v1;
 
-import init.upinmcSE.dao.BookDAO;
-import init.upinmcSE.dao.PatronDAO;
+import init.upinmcSE.repository.custom.BookRepository;
+import init.upinmcSE.repository.custom.PatronRepository;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Book;
 import init.upinmcSE.model.Patron;
-import init.upinmcSE.repository.jdbc.BookJdbcRepository;
-import init.upinmcSE.repository.jdbc.PatronJdbcRepository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,12 +18,12 @@ import java.util.logging.Logger;
 public class PatronService {
     private static final Logger LOGGER = Logger.getLogger(AuthorService.class.getName());
     private static final String NOTI = "Thêm mới độc giả thất bại";
-    private PatronDAO patronDAO;
-    private BookDAO bookDAO;
+    private PatronRepository patronDAO;
+    private BookRepository bookDAO;
 
     public PatronService() {}
 
-    public PatronService(PatronDAO patronDAO, BookDAO bookDAO) {
+    public PatronService(PatronRepository patronDAO, BookRepository bookDAO) {
         this.patronDAO = patronDAO;
         this.bookDAO = bookDAO;
     }

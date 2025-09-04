@@ -1,6 +1,6 @@
 package init.upinmcSE.service.v1;
 
-import init.upinmcSE.dao.AuthorDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
 import init.upinmcSE.db.JDBCUtil;
 import init.upinmcSE.model.Author;
 
@@ -12,9 +12,9 @@ import java.util.logging.Logger;
 
 public class AuthorService {
     private static final Logger LOGGER = Logger.getLogger(AuthorService.class.getName());
-    private final AuthorDAO authorDAO;
+    private final AuthorRepository authorDAO;
 
-    public AuthorService(AuthorDAO authorDAO) {
+    public AuthorService(AuthorRepository authorDAO) {
         this.authorDAO = authorDAO;
     }
 

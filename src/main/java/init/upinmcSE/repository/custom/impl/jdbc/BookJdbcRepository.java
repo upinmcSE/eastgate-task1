@@ -1,6 +1,6 @@
-package init.upinmcSE.repository.jdbc;
+package init.upinmcSE.repository.custom.impl.jdbc;
 
-import init.upinmcSE.dao.BookDAO;
+import init.upinmcSE.repository.custom.BookRepository;
 import init.upinmcSE.model.Book;
 
 import java.sql.*;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class BookJdbcRepository implements BookDAO<Connection> {
+public class BookJdbcRepository implements BookRepository<Connection> {
     private static final BookJdbcRepository INSTANCE = new BookJdbcRepository();
 
     public BookJdbcRepository() {}

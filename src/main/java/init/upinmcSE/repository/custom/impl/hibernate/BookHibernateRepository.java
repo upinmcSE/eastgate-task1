@@ -1,13 +1,13 @@
-package init.upinmcSE.repository.hibernate;
+package init.upinmcSE.repository.custom.impl.hibernate;
 
-import init.upinmcSE.dao.BookDAO;
+import init.upinmcSE.repository.custom.BookRepository;
 import init.upinmcSE.model.Book;
 import org.hibernate.Session;
 
 import java.util.List;
 import java.util.Optional;
 
-public class BookHibernateRepository implements BookDAO<Session> {
+public class BookHibernateRepository implements BookRepository<Session> {
 
     public BookHibernateRepository() {}
 

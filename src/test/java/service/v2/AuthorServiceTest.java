@@ -1,6 +1,6 @@
 package service.v2;
 
-import init.upinmcSE.dao.AuthorDAO;
+import init.upinmcSE.repository.custom.AuthorRepository;
 import init.upinmcSE.db.HibernateUtil;
 import init.upinmcSE.model.Author;
 import init.upinmcSE.service.v2.AuthorService;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 
 class AuthorServiceTest {
 
-    private AuthorDAO authorDAO;
+    private AuthorRepository authorDAO;
     private AuthorService authorService;
     private Session session;
     private Transaction tx;
@@ -27,7 +27,7 @@ class AuthorServiceTest {
 
     @BeforeEach
     void setUp() {
-        authorDAO = mock(AuthorDAO.class);
+        authorDAO = mock(AuthorRepository.class);
         authorService = new AuthorService(authorDAO);
         session = mock(Session.class);
         tx = mock(Transaction.class);

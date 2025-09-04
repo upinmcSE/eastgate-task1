@@ -4,8 +4,8 @@ import java.util.List;
 
 
 public interface CrudRepository<T, C> {
-    public T insertOne(T object, C conn) throws Exception;
-    public T updateOne(T object, C conn) throws Exception;
-    public void deleteOne(T object, C conn) throws Exception;
-    public List<T> getAll(C conn) throws Exception;
+    T insertOne(T object, C conn) throws Exception;
+    T updateOne(T object, C conn) throws Exception;
+    void deleteOne(T object, C conn) throws Exception;
+    List<T> getAll(C conn) throws Exception;
 }

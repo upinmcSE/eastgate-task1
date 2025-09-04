@@ -17,6 +17,8 @@ public class Book {
     private int nxb;
     private int availableCount;
     private int borrowedCount;
+
+    @Version
     private long version;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

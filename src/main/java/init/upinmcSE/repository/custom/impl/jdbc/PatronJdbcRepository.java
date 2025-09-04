@@ -98,5 +98,4 @@ public class PatronJdbcRepository implements PatronRepository<Connection> {
         }
         return patrons;
     }
-
 }

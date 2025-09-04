@@ -8,24 +8,27 @@ public class Book {
     private int nxb;
     private int availableCount;
     private int borrowedCount;
+    private long version;
     private List<Author> authors;
 
     public Book(){}
 
-    public Book(String name, int nxb, int availableCount, int borrowedCount, List<Author> authors) {
+    public Book(String name, int nxb, int availableCount, int borrowedCount, long version, List<Author> authors) {
         this.name = name;
         this.nxb = nxb;
         this.availableCount = availableCount;
         this.borrowedCount = borrowedCount;
+        this.version = version;
         this.authors = authors;
     }
 
-    public Book(int id, String name, int nxb, int availableCount, int borrowedCount, List<Author> authors) {
+    public Book(int id, String name, int nxb, int availableCount, int borrowedCount, long version, List<Author> authors) {
         this.id = id;
         this.name = name;
         this.nxb = nxb;
         this.availableCount = availableCount;
         this.borrowedCount = borrowedCount;
+        this.version = version;
         this.authors = authors;
     }
 
@@ -87,5 +90,13 @@ public class Book {
                 ", borrowedCount=" + borrowedCount +
                 ", authors=" + authors +
                 '}';
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 }

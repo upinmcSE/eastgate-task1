@@ -10,6 +10,7 @@ import init.upinmcSE.repository.jdbc.PatronJdbcRepository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
@@ -166,14 +167,12 @@ public class PatronService {
             // check book exist
             Optional<Book> bookCheck = bookDAO.getByName(book.getName(), conn);
             if (bookCheck.isEmpty()) {
-                conn.rollback();
                 return "Book with name " + book.getName() + " not found";
             }
 
             // check patron exist
             Optional<Patron> patronCheck = patronDAO.getByName(patron.getName(), conn);
             if (patronCheck.isEmpty()) {
-                conn.rollback();
                 return "Patron with name " + patron.getName() + " not found";
             }
 
@@ -206,5 +205,171 @@ public class PatronService {
         return "Return failed";
     }
 
+    public String borrowBookOptimistic(Patron patron, Book book) {
+        if(Objects.isNull(patron) || Objects.isNull(book)) {
+            LOGGER.warning("Inputs is null");
+            return "Inputs is null";
+        }
 
+        Connection conn = null;
+        String atomicUpdateSql = """
+        UPDATE books 
+        SET available_count = available_count - 1, 
+            borrowed_count = borrowed_count + 1, 
+            version = version + 1 
+        WHERE id = ? 
+        AND version = ? 
+        AND available_count > 0
+        """;
+
+        String insertBorrowSql = "INSERT INTO patron_book (patron_id, book_id, status) VALUES (?, ?, ?)";
+
+        try {
+            conn = JDBCUtil.getInstance().getConnection();
+            conn.setAutoCommit(false);
+
+            Optional<Patron> patronCheck = patronDAO.getByName(patron.getName(), conn);
+            if(patronCheck.isEmpty()) {
+                return "Patron not found";
+            }
+
+            Optional<Book> bookCheck = bookDAO.getByName(book.getName(), conn);
+            if(bookCheck.isEmpty()) {
+                return "Book not found";
+            }
+
+            Book currentBook = bookCheck.get();
+
+            boolean alreadyBorrowed = patronDAO.checkBorrowBook(patronCheck.get(), currentBook, conn);
+            if(!alreadyBorrowed) {
+                return "Book already borrowed by you";
+            }
+
+            PreparedStatement updatePs = conn.prepareStatement(atomicUpdateSql);
+            updatePs.setInt(1, currentBook.getId());
+            updatePs.setLong(2, currentBook.getVersion());
+
+            int updateResult = updatePs.executeUpdate();
+
+            if(updateResult == 0) {
+                conn.rollback();
+                return "Book not found during recheck";
+            }
+
+            PreparedStatement insertPs = conn.prepareStatement(insertBorrowSql);
+            insertPs.setInt(1, patronCheck.get().getId());
+            insertPs.setInt(2, currentBook.getId());
+            insertPs.setString(3, "ON");
+
+            int borrowResult = insertPs.executeUpdate();
+            if(borrowResult <= 0) {
+                conn.rollback();
+                return "Failed to create borrow record";
+            }
+
+            conn.commit();
+            return "Borrowed book successfully";
+        } catch (SQLException e) {
+            JDBCUtil.getInstance().rollback(conn);
+            JDBCUtil.getInstance().printSQLException(e);
+            return "Database error occurred";
+        } finally {
+            JDBCUtil.getInstance().closeConnection(conn);
+        }
+    }
+
+
+    public String borrowBookPessimistic(Patron patron, Book book) {
+        if(Objects.isNull(patron) || Objects.isNull(book)) {
+            LOGGER.warning("Inputs is null");
+            return "Inputs is null";
+        }
+
+        Connection conn = null;
+
+        String selectForUpdateSql = """
+                                    SELECT id, name, available_count, borrowed_count, version
+                                    FROM books 
+                                    WHERE name = ? 
+                                    FOR UPDATE NOWAIT
+                                    """;
+
+        String updateBookSql = """
+                                UPDATE books 
+                                SET available_count = available_count - 1, 
+                                    borrowed_count = borrowed_count + 1 
+                                WHERE id = ? AND available_count > 0
+                                """;
+
+        String insertBorrowSql = "INSERT INTO patron_book (patron_id, book_id, status) VALUES (?, ?, ?)";
+
+        try {
+            conn = JDBCUtil.getInstance().getConnection();
+            conn.setAutoCommit(false);
+
+            Optional<Patron> patronCheck = patronDAO.getByName(patron.getName(), conn);
+            if(patronCheck.isEmpty()) {
+                return "Patron with name " + patron.getName() + " not found";
+            }
+
+            Book lockedBook = null;
+            try {
+                PreparedStatement selectPs = conn.prepareStatement(selectForUpdateSql);
+                selectPs.setString(1, book.getName());
+                selectPs.setQueryTimeout(2); // 2 second timeout
+
+                ResultSet rs = selectPs.executeQuery();
+                if(rs.next()) {
+                    lockedBook = new Book();
+                    lockedBook.setId(rs.getInt("book_id"));
+                    lockedBook.setName(rs.getString("name"));
+                    lockedBook.setNxb(rs.getInt("nxb"));
+                    lockedBook.setAvailableCount(rs.getInt("available_count"));
+                    lockedBook.setBorrowedCount(rs.getInt("borrowed_count"));
+                } else {
+                    conn.rollback();
+                    return "Book with name " + book.getName() + " not found";
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                return "Book is currently being processed by another user. Please try again.";
+            }
+
+            boolean alreadyBorrowed = patronDAO.checkBorrowBook(patronCheck.get(), lockedBook, conn);
+            if(!alreadyBorrowed) {
+                conn.rollback();
+                return "This book already borrowed by you";
+            }
+
+            PreparedStatement updatePs = conn.prepareStatement(updateBookSql);
+            updatePs.setInt(1, lockedBook.getId());
+
+            int updateResult = updatePs.executeUpdate();
+            if(updateResult == 0) {
+                conn.rollback();
+                return "unavailable book"; // No rows affected = no available books
+            }
+
+            PreparedStatement insertPs = conn.prepareStatement(insertBorrowSql);
+            insertPs.setInt(1, patronCheck.get().getId());
+            insertPs.setInt(2, lockedBook.getId());
+            insertPs.setString(3, "ON");
+
+            int borrowResult = insertPs.executeUpdate();
+            if(borrowResult <= 0) {
+                conn.rollback();
+                LOGGER.warning("Lỗi không tạo được bản ghi mượn book");
+                return "Borrow book failed";
+            }
+
+            conn.commit();
+            return "Borrowed book successfully";
+        } catch (SQLException e) {
+            JDBCUtil.getInstance().rollback(conn);
+            JDBCUtil.getInstance().printSQLException(e);
+            return "Database error occurred";
+        } finally {
+            JDBCUtil.getInstance().closeConnection(conn);
+        }
+    }
 }

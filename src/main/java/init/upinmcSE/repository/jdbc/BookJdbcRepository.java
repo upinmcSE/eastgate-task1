@@ -11,7 +11,7 @@ import java.util.Optional;
 public class BookJdbcRepository implements BookDAO {
     private static final BookJdbcRepository INSTANCE = new BookJdbcRepository();
 
-    private BookJdbcRepository() {}
+    public BookJdbcRepository() {}
 
     public static BookJdbcRepository getInstance() {
         return INSTANCE;

@@ -12,7 +12,7 @@ import java.util.Optional;
 public class PatronJdbcRepository implements PatronDAO {
     private static final PatronJdbcRepository INSTANCE = new PatronJdbcRepository();
 
-    private PatronJdbcRepository() {}
+    public PatronJdbcRepository() {}
 
     public static PatronJdbcRepository getInstance() {
         return INSTANCE;
